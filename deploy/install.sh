@@ -46,31 +46,31 @@ set_env() {  # set_env KEY VALUE  (escapes sed specials)
   val="${val//\\/\\\\}"; val="${val//&/\\&}"; val="${val//|/\\|}"
   if grep -q "^${key}=" .env; then sed -i "s|^${key}=.*|${key}=${val}|" .env; else printf '%s=%s\n' "$key" "$val" >> .env; fi
 }
-ask() {  # ask VAR "Prompt"  — from env if set, else from the terminal
+ask() {  # ask VAR "Prompt"  — environment wins, then the existing .env, then the terminal
   local var="$1" prompt="$2" cur
   cur="${!var:-}"
+  if [ -z "$cur" ] && [ -f .env ]; then cur="$(grep -E "^${var}=" .env | head -1 | cut -d= -f2-)"; fi
   if [ -z "$cur" ]; then
-    if [ -r /dev/tty ]; then read -r -p "$prompt: " cur </dev/tty; else die "$var is not set and no terminal is available."; fi
+    if [ -r /dev/tty ]; then read -r -p "$prompt: " cur </dev/tty 2>/dev/null || cur=""; fi
   fi
-  [ -n "$cur" ] || die "$var is required."
+  [ -n "$cur" ] || die "$var is required. Pass it like:  BOT_TOKEN=... SYSTEM_OWNER_ID=... OPENROUTER_API_KEY=... bash install.sh"
   printf -v "$var" '%s' "$cur"
 }
 
-if [ ! -f .env ]; then
-  log "Creating .env"
-  cp .env.example .env
-  ask BOT_TOKEN "BOT_TOKEN (from @BotFather)"
-  ask SYSTEM_OWNER_ID "SYSTEM_OWNER_ID (your numeric Telegram ID)"
-  ask OPENROUTER_API_KEY "OPENROUTER_API_KEY (https://openrouter.ai/keys)"
-  set_env BOT_TOKEN "$BOT_TOKEN"
-  set_env SYSTEM_OWNER_ID "$SYSTEM_OWNER_ID"
-  set_env OPENROUTER_API_KEY "$OPENROUTER_API_KEY"
-  [ -n "${DEFAULT_TIMEZONE:-}" ] && set_env DEFAULT_TIMEZONE "$DEFAULT_TIMEZONE"
-  [ -n "${DEFAULT_LANGUAGE:-}" ] && set_env DEFAULT_LANGUAGE "$DEFAULT_LANGUAGE"
-  chmod 600 .env
-else
-  log ".env already exists — keeping it"
-fi
+log "Configuration (.env)"
+[ -f .env ] || cp .env.example .env
+ask BOT_TOKEN "BOT_TOKEN (from @BotFather)"
+ask SYSTEM_OWNER_ID "SYSTEM_OWNER_ID (your numeric Telegram ID)"
+ask OPENROUTER_API_KEY "OPENROUTER_API_KEY (https://openrouter.ai/keys)"
+case "$BOT_TOKEN" in *:*) ;; *) die "BOT_TOKEN looks wrong (expected 123456789:AA...)";; esac
+case "$SYSTEM_OWNER_ID" in ''|*[!0-9]*) die "SYSTEM_OWNER_ID must be a number";; esac
+set_env BOT_TOKEN "$BOT_TOKEN"
+set_env SYSTEM_OWNER_ID "$SYSTEM_OWNER_ID"
+set_env OPENROUTER_API_KEY "$OPENROUTER_API_KEY"
+[ -n "${DEFAULT_TIMEZONE:-}" ] && set_env DEFAULT_TIMEZONE "$DEFAULT_TIMEZONE"
+[ -n "${DEFAULT_LANGUAGE:-}" ] && set_env DEFAULT_LANGUAGE "$DEFAULT_LANGUAGE"
+[ -n "${MODERATION_MODELS:-}" ] && set_env MODERATION_MODELS "$MODERATION_MODELS"
+chmod 600 .env
 
 # ── pick mode ────────────────────────────────────────────────
 py_ok() { "$1" -c 'import sys; raise SystemExit(0 if sys.version_info >= (3, 11) else 1)' >/dev/null 2>&1; }
@@ -92,6 +92,10 @@ if [ "$MODE" = "--native" ]; then
   [ -x .venv/bin/python ] || "$PY" -m venv .venv
   .venv/bin/pip install -q --upgrade pip
   .venv/bin/pip install -q -r requirements.txt
+
+  log "Validating configuration"
+  .venv/bin/python -c "from vigil.config import get_settings; s = get_settings(); print('  owner', s.system_owner_id, '·', len(s.model_chain), 'models')" \
+    || die "Configuration invalid — check the values in $APP_DIR/.env"
 
   cat > /etc/systemd/system/vigil.service <<UNIT
 [Unit]
