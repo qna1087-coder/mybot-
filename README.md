@@ -66,7 +66,16 @@ OPENROUTER_API_KEY=   # من https://openrouter.ai/keys
 curl -fsSL https://raw.githubusercontent.com/qna1087-coder/mybot-/claude/telegram-protection-system-fl5j6k/deploy/install.sh | bash
 ```
 
-السكربت يثبّت المتطلبات، ينسخ الكود إلى `/opt/vigil`، يسألك عن القيم الثلاث (التوكن، معرّفك، مفتاح OpenRouter)، ينشئ خدمة `systemd` باسم `vigil` تعمل تلقائيًا بعد إعادة التشغيل، ويعرض السجل. إن كان المستودع خاصًا، انسخ الملف `deploy/install.sh` إلى السيرفر ومرّر `REPO_URL` برابط يحمل Token. إعادة تشغيل السكربت لاحقًا = تحديث الكود وإعادة التشغيل.
+السكربت يثبّت المتطلبات، ينسخ الكود إلى `/opt/vigil`، يسألك عن القيم الثلاث (التوكن، معرّفك، مفتاح OpenRouter)، ينشئ خدمة `systemd` باسم `vigil` تعمل تلقائيًا بعد إعادة التشغيل، ويعرض السجل. إعادة تشغيل السكربت لاحقًا = تحديث الكود وإعادة التشغيل.
+
+**إن كان المستودع خاصًا** (الأمر أعلاه يعيد 404): أنشئ Token للقراءة من GitHub (Settings → Developer settings → Fine-grained tokens → هذا المستودع → Contents: Read) ثم:
+
+```bash
+export GH_TOKEN=ghp_xxxxxxxx
+curl -fsSL -H "Authorization: token $GH_TOKEN" \
+  https://raw.githubusercontent.com/qna1087-coder/mybot-/claude/telegram-protection-system-fl5j6k/deploy/install.sh \
+  | REPO_URL="https://$GH_TOKEN@github.com/qna1087-coder/mybot-.git" bash
+```
 
 ### خطوات التفعيل لأول قناة
 
@@ -150,6 +159,8 @@ curl -fsSL https://raw.githubusercontent.com/qna1087-coder/mybot-/claude/telegra
 ```
 
 Installs prerequisites, clones into `/opt/vigil`, asks for the three secrets, creates a `vigil` systemd service, and shows the log. Falls back to Docker when Python ≥ 3.11 is not available. Re-run to update.
+
+Private repository: fetch the script with a read-only token and pass `REPO_URL="https://$GH_TOKEN@github.com/qna1087-coder/mybot-.git"` (see the Arabic section for the exact two lines).
 
 Bot rights needed in the channel: **Add new admins**, **Delete messages** (optional: Post messages). Channel setting: **Sign messages** on.
 
