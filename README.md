@@ -60,6 +60,14 @@ OPENROUTER_API_KEY=   # من https://openrouter.ai/keys
 
 > لا تضع التوكن أو المفتاح في أي ملف داخل Git. ملف `.env` مستثنى عبر `.gitignore`.
 
+### التنصيب على سيرفر بأمر واحد (Debian/Ubuntu، كـ root)
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/qna1087-coder/mybot-/claude/telegram-protection-system-fl5j6k/deploy/install.sh | bash
+```
+
+السكربت يثبّت المتطلبات، ينسخ الكود إلى `/opt/vigil`، يسألك عن القيم الثلاث (التوكن، معرّفك، مفتاح OpenRouter)، ينشئ خدمة `systemd` باسم `vigil` تعمل تلقائيًا بعد إعادة التشغيل، ويعرض السجل. إن كان المستودع خاصًا، انسخ الملف `deploy/install.sh` إلى السيرفر ومرّر `REPO_URL` برابط يحمل Token. إعادة تشغيل السكربت لاحقًا = تحديث الكود وإعادة التشغيل.
+
 ### خطوات التفعيل لأول قناة
 
 1. أرسل `/start` للبوت من حسابك (مالك النظام) ومن حساب مالك القناة.
@@ -134,6 +142,14 @@ pip install -r requirements.txt
 cp .env.example .env   # BOT_TOKEN, SYSTEM_OWNER_ID, OPENROUTER_API_KEY
 python -m vigil        # or: docker compose up -d --build
 ```
+
+### One-command server install (Debian/Ubuntu, as root)
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/qna1087-coder/mybot-/claude/telegram-protection-system-fl5j6k/deploy/install.sh | bash
+```
+
+Installs prerequisites, clones into `/opt/vigil`, asks for the three secrets, creates a `vigil` systemd service, and shows the log. Falls back to Docker when Python ≥ 3.11 is not available. Re-run to update.
 
 Bot rights needed in the channel: **Add new admins**, **Delete messages** (optional: Post messages). Channel setting: **Sign messages** on.
 
