@@ -1,0 +1,11 @@
+services:
+  vigil:
+    build: .
+    container_name: vigil
+    restart: unless-stopped
+    env_file: .env
+    volumes:
+      - ./data:/app/data
+    # Uncomment for webhook mode
+    # ports:
+    #   - "8080:8080"
