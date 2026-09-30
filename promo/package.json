@@ -1,0 +1,14 @@
+{
+  "name": "br-promo-film",
+  "version": "1.0.0",
+  "description": "BR promotional film: procedural 3D render pipeline",
+  "scripts": {
+    "render": "node render.mjs"
+  },
+  "license": "ISC",
+  "dependencies": {
+    "three": "^0.170.0"
+  },
+  "type": "module",
+  "private": true
+}
