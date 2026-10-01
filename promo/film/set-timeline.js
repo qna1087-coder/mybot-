@@ -70,8 +70,8 @@ export function buildTimeline(ctx) {
   for (const [y, x] of Object.entries(YEAR_X)) {
     const geo = new TextGeometry(y, {
       font,
-      size: 3.2,
-      depth: 0.55,
+      size: 2.3,
+      depth: 0.45,
       curveSegments: 6,
       bevelEnabled: true,
       bevelThickness: 0.06,
@@ -82,7 +82,7 @@ export function buildTimeline(ctx) {
     const bb = geo.boundingBox;
     geo.translate(-(bb.max.x + bb.min.x) / 2, 0, 0);
     const mesh = new THREE.Mesh(geo, yearMat.clone());
-    mesh.position.set(x - 3.2, 0.25, TL_Z - 3.6);
+    mesh.position.set(x - 3.2, 0.25, TL_Z - 4.2);
     mesh.rotation.y = 0.18;
     g.add(mesh);
     const back = new THREE.Mesh(
@@ -235,7 +235,7 @@ export function buildTimeline(ctx) {
   cube.add(cracks);
   g.add(cube);
   // frozen logo (separate so it can fly out)
-  const frozenMat = metal(0xc8ccd6, 0.2, { emissive: new THREE.Color(0xff1a2a), emissiveIntensity: 0 });
+  const frozenMat = metal(0xc8ccd6, 0.2, { emissive: new THREE.Color(0x8fa4c8), emissiveIntensity: 0 });
   const heart = extrudeLogo(logos.br, 2.2, 0.38, frozenMat);
   heart.position.copy(CUBE_POS);
   g.add(heart);
@@ -250,14 +250,14 @@ export function buildTimeline(ctx) {
   // ── Finale: massive logo + convergence ──
   const fin = new THREE.Group();
   fin.position.copy(FINAL_POS);
-  const bigMat = metal(0xdadde4, 0.14, { clearcoat: 1, transparent: true, opacity: 0 });
+  const bigMat = metal(0xe4e7ee, 0.32, { metalness: 0.85, clearcoat: 1, clearcoatRoughness: 0.1, envMapIntensity: 1.7, transparent: true, opacity: 0 });
   const big = extrudeLogo(logos.br, 26, 3.6, bigMat, 0.03);
   fin.add(big);
   const bigLine = logoOutline(logos.br, 26, 0xffffff, 0);
   bigLine.position.z = 1.9;
   fin.add(bigLine);
   const NC = 3000;
-  const conv = pointCloud(NC, sprite, 0.55);
+  const conv = pointCloud(NC, sprite, 1.6);
   const convData = [];
   const targets = sampleLogo(logos.br, 26, NC, r);
   for (let i = 0; i < NC; i++) {
@@ -385,7 +385,8 @@ export function buildTimeline(ctx) {
     heart.position.y += Math.sin(fly * Math.PI) * 2.5 + Math.sin(t * 0.8) * 0.06;
     heart.rotation.y = shattered ? (1 - fly) * Math.PI * 2 + Math.sin(t * 0.3) * 0.15 : 0.35;
     heart.scale.setScalar(lerp(1, 1.5, fly));
-    heart.material.emissiveIntensity = shattered ? 0.25 * (1 - clamp(st / 2.5)) + 0.04 : 0;
+    heart.material.emissive.setHex(shattered ? 0xff1a2a : 0x8fa4c8);
+    heart.material.emissiveIntensity = shattered ? 0.35 * (1 - clamp(st / 2.5)) + 0.04 : 0.12 + freeze * 0.1;
     heart.material.envMapIntensity = lerp(0.35, 1.3, smooth(ramp(t, M.s5, M.shatter + 0.5)));
     heart.visible = !recap && t < M.s6;
 

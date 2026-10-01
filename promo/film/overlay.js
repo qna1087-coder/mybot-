@@ -43,7 +43,7 @@ export class Overlay {
       let transform = '';
       let filter = `blur(${((1 - inA) * 10 + (1 - outA) * 6).toFixed(2)}px)`;
       if (cls === 'en-xl') {
-        const sp = lerp(0.7, 0.42, easeOut(u / d));
+        const sp = lerp(0.55, 0.32, easeOut(u / d));
         el.style.letterSpacing = `${sp}em`;
         el.style.paddingLeft = `${sp}em`;
         if (it.rule) it.rule.style.width = `${easeOut((u - 0.3) / 1.2) * 220}px`;

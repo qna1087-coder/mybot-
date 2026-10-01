@@ -53,7 +53,7 @@ export class Presenter {
     this.root.add(this.model);
     this.bones = {};
     this.model.traverse((o) => {
-      if (o.isBone) this.bones[o.name.replace('mixamorig:', '')] = o;
+      if (o.isBone) this.bones[o.name.replace(/^mixamorig:?/, '')] = o;
       if (o.isMesh) {
         o.castShadow = true;
         o.frustumCulled = false;
@@ -61,19 +61,21 @@ export class Presenter {
     });
     // Restyle: glossy black suit shell, graphite-metal joints.
     const suit = new THREE.MeshPhysicalMaterial({
-      color: 0x0c0c0f,
-      metalness: 0.55,
-      roughness: 0.26,
-      clearcoat: 1,
-      clearcoatRoughness: 0.12,
+      color: 0x060607,
+      metalness: 0.15,
+      roughness: 0.42,
+      clearcoat: 0.3,
+      clearcoatRoughness: 0.35,
+      envMapIntensity: 0.35,
       sheen: 0.4,
       sheenColor: new THREE.Color(0x6a6f7a),
     });
     const joints = new THREE.MeshPhysicalMaterial({
-      color: 0x55575e,
+      color: 0x2a2b30,
       metalness: 1,
-      roughness: 0.22,
-      clearcoat: 0.8,
+      roughness: 0.3,
+      clearcoat: 0.6,
+      envMapIntensity: 0.6,
     });
     this.model.traverse((o) => {
       if (!o.isMesh) return;
@@ -99,7 +101,7 @@ export class Presenter {
     // Thin dark-red chest line + silver collar ring: reads as a tailored tech suit.
     const spine = this.bones.Spine2;
     const neck = this.bones.Neck;
-    const red = new THREE.MeshBasicMaterial({ color: C.redHot, toneMapped: false });
+    const red = new THREE.MeshBasicMaterial({ color: new THREE.Color(C.redHot).multiplyScalar(0.55), toneMapped: false });
     const line = new THREE.Mesh(new THREE.BoxGeometry(1.2, 22, 1.2), red);
     // bone space is in centimetres (armature is scaled 0.01)
     line.position.set(0, 4, 13.2);

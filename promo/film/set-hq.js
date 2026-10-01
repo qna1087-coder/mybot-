@@ -38,6 +38,14 @@ export function buildHQ(ctx) {
   });
   mirror.rotation.x = -Math.PI / 2;
   g.add(mirror);
+  // Volumetric cones look wrong when mirrored; keep them out of the reflection pass.
+  const mirrorRender = mirror.onBeforeRender;
+  mirror.onBeforeRender = function (...args) {
+    const vis = ctx.noReflect.map((o) => o.visible);
+    for (const o of ctx.noReflect) o.visible = false;
+    mirrorRender.apply(this, args);
+    ctx.noReflect.forEach((o, i) => (o.visible = vis[i]));
+  };
   const floorU = { uPower: { value: 0 }, uPulse: { value: 0 }, uTime: { value: 0 } };
   const floor = new THREE.Mesh(
     new THREE.CircleGeometry(30.2, 128),
@@ -67,7 +75,7 @@ export function buildHQ(ctx) {
   g.add(floor);
 
   // ── Central dais under the logo ──
-  const dais = new THREE.Mesh(new THREE.CylinderGeometry(4.3, 4.6, 0.35, 96), metal(C.graphite, 0.35));
+  const dais = new THREE.Mesh(new THREE.CylinderGeometry(4.3, 4.6, 0.35, 96), metal(C.graphite, 0.6));
   dais.position.set(LOGO_POS.x, 0.17, LOGO_POS.z);
   g.add(dais);
   const daisRing = new THREE.Mesh(new THREE.TorusGeometry(4.35, 0.03, 8, 160), glowMat(C.redHot));
@@ -112,10 +120,12 @@ export function buildHQ(ctx) {
     m.position.set(Math.sin(a) * 12, 7, Math.cos(a) * 12);
     g.add(m);
     beams.push(m);
+    ctx.noReflect.push(m);
   }
   const hero = new THREE.Mesh(new THREE.CylinderGeometry(0.25, 3.2, 16, 48, 1, true), beamMaterial(0xffffff, 0));
   hero.position.set(0, 8, 0);
   g.add(hero);
+  ctx.noReflect.push(hero);
 
   // ── Screens ring (fictional dashboards) ──
   const screens = [];
@@ -131,7 +141,7 @@ export function buildHQ(ctx) {
   }
 
   // ── Hero logo (metal) ──
-  const logoMat = metal(0xd8dbe2, 0.16, { clearcoat: 1 });
+  const logoMat = metal(0xd8dbe2, 0.24, { clearcoat: 1, clearcoatRoughness: 0.08 });
   const logo = extrudeLogo(logos.br, 2.6, 0.42, logoMat);
   logo.position.copy(LOGO_POS);
   g.add(logo);
@@ -256,9 +266,8 @@ export function buildHQ(ctx) {
       d.add(pn);
       panels.push(pn);
     }
-    const num = label(`0${i + 1}`, 1.3, { weight: 200, size: 160 });
-    num.position.set(0, 2.2, 0.2);
-    d.add(num);
+    const num = new THREE.Object3D();
+    num.material = {};
     d.rotation.y = Math.atan2(-p.x, 6 - p.z);
     d.userData = { panels, num };
     struct.add(d);
@@ -270,8 +279,8 @@ export function buildHQ(ctx) {
       new THREE.Vector3(p.x * 0.5, p.y + 2.5, (p.z - 8) / 2),
       p,
     );
-    const geo = new THREE.TubeGeometry(curve, 64, 0.035, 6);
-    const m = new THREE.Mesh(geo, glowMat(0xffffff, 0.9));
+    const geo = new THREE.TubeGeometry(curve, 64, 0.012, 6);
+    const m = new THREE.Mesh(geo, glowMat(0xffffff, 0.6));
     geo.setDrawRange(0, 0);
     struct.add(m);
     return m;
@@ -280,14 +289,14 @@ export function buildHQ(ctx) {
 
   // ── Scene 14: value flowing both ways ──
   const flow = new THREE.Group();
-  flow.position.set(0, 5.2, -9);
-  const brNode = new THREE.Mesh(new THREE.SphereGeometry(0.7, 32, 24), glowMat(0xffffff, 0.9));
+  flow.position.set(0, 3.6, -9);
+  const brNode = new THREE.Mesh(new THREE.SphereGeometry(0.35, 32, 24), glowMat(0xffffff, 0.9));
   brNode.position.x = -5.5;
   flow.add(brNode);
   const brLab = label('BR', 0.5, { weight: 600 });
   brLab.position.set(-5.5, 1.3, 0);
   flow.add(brLab);
-  const memNode = new THREE.Mesh(new THREE.SphereGeometry(0.7, 32, 24), glowMat(C.redHot, 0.9));
+  const memNode = new THREE.Mesh(new THREE.SphereGeometry(0.35, 32, 24), glowMat(C.redHot, 0.9));
   memNode.position.x = 5.5;
   flow.add(memNode);
   const memLab = label('MEMBERS', 0.42, { weight: 600 });
@@ -349,7 +358,7 @@ export function buildHQ(ctx) {
     daisRing.material.opacity = power;
     for (const p of pillars) {
       const on = smooth(ramp(t, M.hqReveal + 0.15 * (p.userData.i % 8), M.hqReveal + 0.15 * (p.userData.i % 8) + 0.4));
-      p.userData.strip.material.opacity = on * (0.35 + 0.65 * power);
+      p.userData.strip.material.opacity = on * (0.2 + 0.4 * power);
     }
     ringOuter.material.opacity = power * 0.9;
     ringInner.material.opacity = power * 0.7;
@@ -358,11 +367,12 @@ export function buildHQ(ctx) {
     });
     // hero spot on presenter during the calm section
     hero.material.uniforms.uStrength.value =
-      window01(t, M.s12 - 0.5, M.s13 + 1, 1.5, 1.5) * 1.6 + window01(t, M.s16 - 0.5, M.s17, 1.5, 0.5) * 1.1;
+      window01(t, M.s12 - 0.5, M.s13 + 1, 1.5, 1.5) * 0.8 + window01(t, M.s16 - 0.5, M.s17, 1.5, 0.5) * 0.5;
     screens.forEach((s) => {
       const on = smooth(ramp(t, M.hqReveal + 0.8 + s.userData.i * 0.12, M.hqReveal + 1.2 + s.userData.i * 0.12));
       const flick = on < 1 ? (Math.sin(t * 90 + s.userData.i) > 0 ? 1 : 0.3) : 1;
-      s.material.opacity = on * flick * (0.35 + 0.5 * power);
+      const busy = window01(t, M.s6 - 0.5, M.s11, 1, 0.5) + window01(t, M.s13 - 0.5, M.s16, 1, 1);
+      s.material.opacity = on * flick * (0.35 + 0.5 * power) * (1 - 0.8 * clamp(busy));
       s.position.y += Math.sin(t * 0.6 + s.userData.i) * 0.002;
     });
 
@@ -406,10 +416,10 @@ export function buildHQ(ctx) {
 
     // Tech holograms
     const tw0 = M.techWords;
-    tech.visible = t > M.s6 - 0.5 && t < M.s7 + 1;
+    tech.visible = t > M.s6 - 0.5 && t < M.s11 + 1;
     techItems.forEach((it, i) => {
       const k = easeOut(clamp((t - tw0 - i * 0.55) / 0.8));
-      const out = smooth(clamp((M.s7 + 0.6 - t) / 0.6));
+      const out = smooth(clamp((M.s11 + 0.6 - t) / 0.6));
       it.scale.setScalar(Math.max(0.001, k));
       it.userData.panel.material.opacity = k * out * 0.85;
       it.userData.lb.material.opacity = k * out;
@@ -437,7 +447,7 @@ export function buildHQ(ctx) {
     branchLines.forEach((m, i) => {
       const k = easeInOut(clamp((sp - i * 0.15) / 1.2));
       m.geometry.setDrawRange(0, Math.floor(k * m.geometry.index.count / 3) * 3);
-      m.material.opacity = 0.9 * smooth((M.s14 + 0.8 - t) / 0.8);
+      m.material.opacity = 0.6 * smooth((M.s14 + 0.8 - t) / 0.8);
     });
     const divStart = [M.div1, M.div2, M.div3];
     divs.forEach((d, i) => {
@@ -460,7 +470,7 @@ export function buildHQ(ctx) {
     }
     wc.needsUpdate = true;
     const flowOn = window01(t, M.flow - 0.3, M.s15 + 0.6, 1, 0.6);
-    brNode.material.opacity = memNode.material.opacity = flowOn * 0.9;
+    brNode.material.opacity = memNode.material.opacity = flowOn * 0.45;
     brLab.material.opacity = memLab.material.opacity = flowOn;
     const fp = flowPts.geometry.attributes.position;
     const fc = flowPts.geometry.attributes.color;
