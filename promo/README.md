@@ -1,6 +1,6 @@
 # BR — الحزب الإصلاحي · promotional film
 
-A procedural 3D motion-graphics film (1920×1080, 30 fps, ~4:26) with an Arabic voice-over,
+A procedural 3D motion-graphics film (1920×1080, 30 fps, ~3:50) with an Arabic voice-over,
 rendered with three.js in headless Chromium and encoded with ffmpeg. Every frame is a pure
 function of time, so any range can be re-rendered on its own.
 
@@ -22,16 +22,14 @@ gold-embroidered BR emblem on the chest.
 
 ## Voice-over
 
-The narration is synthesized offline by `tools/voiceover.py` from `film/vo-script.json`,
-which pairs each caption with a hand-diacritized spoken form (the tashkeel fixes
-pronunciation; years are written out as words, "BR" is spoken "بي آر", "Pera" "بيرا").
-The voice is Piper's Arabic "kareem" model run through sherpa-onnx. In a Whisper
-round-trip test it was the most intelligible of the available Arabic voices. It speaks
-with a Levantine/MSA accent rather than an Iraqi one. For a native Iraqi narrator, record
-to `BR_vo_cue_sheet.txt` and lay the recording over `BR_music_fx_no_voice.wav`.
+The narration is an ElevenLabs recording (voice "Sufyan"), delivered as one file, cut into
+the 61 lines (`assets/vo/NN.wav`) and imported with `tools/import_vo.py`. The film's timing
+follows the recordings: `assets/vo/durations.json` sets how long each caption, and so each
+scene, lasts.
 
-The film's timing follows the recordings: `assets/vo/durations.json` sets how long each
-caption (and so each scene) lasts.
+To replace the voice, generate the lines from `tts/` (one file per line, named 01–61) and
+run `python3 tools/import_vo.py <folder>`. `tools/voiceover.py` can still synthesize an
+offline fallback voice from the diacritized lines in `film/vo-script.json`.
 
 ## Structure
 
@@ -41,18 +39,18 @@ large-scale automation, internal/external systems) are not part of this cut.
 | Time | Scene |
 | --- | --- |
 | 0:00 | Darkness, metal particles, the beam reveals the BR logo, the command center powers up, the presenter walks in |
-| 0:28 | The floating timeline: 2022 (the structure forms), 2023 (systems switch on) |
-| 1:11 | 2024: the logo is frozen inside glass |
-| 1:27 | 2026: the glass cracks and shatters into gold, THE RETURN, the headquarters expands into sectors |
-| 1:45 | Technology hall holograms |
-| 1:57 | Server corridor → POWERED BY PERA SERVICES |
-| 2:12 | "We want experience", member profiles join departments |
-| 2:30 | BR STRUCTURE: three divisions (العمليات · الاستخبارات · التجارة) |
-| 3:07 | إنت تفيدنا / وإحنا نفيدك: value flowing both ways |
-| 3:25 | The BR ecosystem ring |
-| 3:35 | Presenter close-up: BUILD · DEVELOP · ORGANIZE |
-| 3:50 | Timeline recap 2022 → 2026 |
-| 4:06 | Everything converges into the BR logo, end card, fade, final impact |
+| 0:26 | The floating timeline: 2022 (the structure forms), 2023 (systems switch on) |
+| 1:02 | 2024: the logo is frozen inside glass |
+| 1:16 | 2026: the glass cracks and shatters into gold, THE RETURN, the headquarters expands into sectors |
+| 1:32 | Technology hall holograms |
+| 1:41 | Server corridor → POWERED BY PERA SERVICES |
+| 1:52 | "We want experience", member profiles join departments |
+| 2:07 | BR STRUCTURE: three divisions (العمليات · الاستخبارات · التجارة) |
+| 2:38 | إنت تفيدنا / وإحنا نفيدك: value flowing both ways |
+| 2:53 | The BR ecosystem ring |
+| 3:04 | Presenter close-up: BUILD · DEVELOP · ORGANIZE |
+| 3:17 | Timeline recap 2022 → 2026 |
+| 3:30 | Everything converges into the BR logo, end card, fade, final impact |
 
 ## Rebuild
 
@@ -60,7 +58,7 @@ large-scale automation, internal/external systems) are not part of this cut.
 cd promo
 npm install                                   # three.js
 python3 tools/trace_logos.py                  # logos → assets/logos.json (only if the artwork changes)
-pip install sherpa-onnx && python3 tools/voiceover.py   # voice → assets/vo/ (downloads the voice model once)
+python3 tools/import_vo.py <folder>           # voice recordings → assets/vo/ (or tools/voiceover.py for the offline voice)
 node render.mjs --cues out/cues.json          # timing for the soundtrack
 python3 tools/soundtrack.py out/cues.json out # voice processing, music, sfx, mixes, captions, cue sheet
 node render.mjs --from 0 --to 67 --out out/chunks/c0.mp4   # …render ranges in parallel (the software GPU uses one core each)
