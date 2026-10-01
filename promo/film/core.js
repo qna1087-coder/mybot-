@@ -7,8 +7,8 @@ export const C = {
   steel: 0x3a3c42,
   silver: 0xc9ccd3,
   white: 0xf2f3f5,
-  red: 0xb3121f,
-  redHot: 0xff2a3a,
+  gold: 0xb8913f,
+  goldHot: 0xffd27f,
   ice: 0xdfe8ff,
 };
 
@@ -123,6 +123,11 @@ export function label(text, height, opts = {}) {
 }
 
 // ── Materials ───────────────────────────────────────────────────────────────
+/** Polished champagne gold, used on logo edges and trims. */
+export function gold(rough = 0.2, extra = {}) {
+  return metal(0xd9b56a, rough, { clearcoatRoughness: 0.06, ...extra });
+}
+
 export function metal(color = C.silver, rough = 0.22, extra = {}) {
   return new THREE.MeshPhysicalMaterial({
     color,
@@ -223,7 +228,7 @@ export function logoOutline(polys, height, color, opacity = 1) {
 
 /** Fictional dashboard texture: bars, sparklines, grids. No real data of any kind. */
 export function dashboardTexture(seed, opts = {}) {
-  const { w = 512, h = 320, accent = '#ff2a3a', title = '' } = opts;
+  const { w = 512, h = 320, accent = '#e3bd72', title = '' } = opts;
   const r = rng(seed);
   const c = document.createElement('canvas');
   c.width = w;
@@ -295,7 +300,7 @@ export function dashboardTexture(seed, opts = {}) {
 }
 
 /** Semi-transparent hologram panel with a fictional dashboard on it. */
-export function holoPanel(seed, w, h, title = '', accent = '#ff2a3a') {
+export function holoPanel(seed, w, h, title = '', accent = '#e3bd72') {
   const tex = dashboardTexture(seed, { title, accent });
   const mat = new THREE.MeshBasicMaterial({
     map: tex,

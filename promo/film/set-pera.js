@@ -5,6 +5,7 @@ import {
   clamp,
   easeOut,
   extrudeLogo,
+  gold,
   glowMat,
   holoPanel,
   label,
@@ -33,7 +34,7 @@ export function buildPera(ctx) {
   floor.rotation.x = -Math.PI / 2;
   floor.position.set(PS.x, 0, PS.z - 10);
   g.add(floor);
-  const lane = new THREE.Mesh(new THREE.PlaneGeometry(0.06, 120), glowMat(C.redHot, 0.7));
+  const lane = new THREE.Mesh(new THREE.PlaneGeometry(0.06, 120), glowMat(C.goldHot, 0.7));
   lane.rotation.x = -Math.PI / 2;
   lane.position.set(PS.x, 0.01, PS.z - 10);
   g.add(lane);
@@ -96,7 +97,9 @@ export function buildPera(ctx) {
   const wall = new THREE.Mesh(new THREE.PlaneGeometry(14, 9), new THREE.MeshPhysicalMaterial({ color: 0x0a0b0e, metalness: 0.8, roughness: 0.35 }));
   wall.position.set(PERA_LOGO.x, 4.5, PERA_LOGO.z - 1.6);
   g.add(wall);
-  const logo = extrudeLogo(logos.pera, 3.6, 0.45, metal(0xd6d9e0, 0.15, { clearcoat: 1 }));
+  const peraFace = metal(0xd6d9e0, 0.15, { clearcoat: 1 });
+  const peraGold = gold(0.2);
+  const logo = extrudeLogo(logos.pera, 3.6, 0.45, [peraFace, peraGold]);
   logo.position.copy(PERA_LOGO);
   g.add(logo);
   const halo = new THREE.Mesh(new THREE.PlaneGeometry(12, 12), new THREE.MeshBasicMaterial({ map: sprite, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, color: 0x9aa6c0, toneMapped: false }));
@@ -115,7 +118,7 @@ export function buildPera(ctx) {
   g.add(name);
 
   const words = ['INFRASTRUCTURE', 'HOSTING', 'SYSTEMS', 'SUPPORT'].map((w, i) => {
-    const lb = label(w, 0.36, { weight: 600, glow: 12, tint: i === 1 ? 0xff5a66 : 0xffffff });
+    const lb = label(w, 0.36, { weight: 600, glow: 12, tint: i === 1 ? 0xffd58a : 0xffffff });
     const side = i % 2 ? 1 : -1;
     lb.position.set(PERA_LOGO.x + side * 3.6, 5.6 - Math.floor(i / 2) * 2.4, PERA_LOGO.z + 3);
     lb.rotation.y = (-side * Math.PI) / 9;
@@ -138,7 +141,8 @@ export function buildPera(ctx) {
       p.position.y = 4.9 + Math.sin(t * 0.8 + i) * 0.06;
     });
     const lk = t - M.peraLogo;
-    logo.material.envMapIntensity = 0.3 + 1.2 * smooth(clamp(lk / 1));
+    peraFace.envMapIntensity = 0.3 + 1.2 * smooth(clamp(lk / 1));
+    peraGold.envMapIntensity = peraFace.envMapIntensity;
     logo.rotation.y = Math.sin(t * 0.3) * 0.12;
     peraKey.intensity = on * (1.5 + 5 * smooth(clamp(lk / 1)));
     halo.material.opacity = on * (0.25 + 0.35 * smooth(clamp(lk / 1)));
@@ -173,7 +177,7 @@ function ledTexture(r) {
     for (let x = 8; x < 60; x += 11) {
       const v = r();
       if (v < 0.45) continue;
-      g.fillStyle = v > 0.93 ? '#ff2a3a' : `rgba(225,232,255,${0.35 + v * 0.6})`;
+      g.fillStyle = v > 0.93 ? '#e3bd72' : `rgba(225,232,255,${0.35 + v * 0.6})`;
       g.fillRect(x, y, 5, 2);
     }
   g.fillStyle = 'rgba(200,210,230,0.25)';

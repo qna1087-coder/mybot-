@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { C, clamp, lerp, smooth } from './core.js';
+import { clamp, lerp, logoShapes, smooth } from './core.js';
 
 // The presenter: a rigged figure restyled as a sleek black-suited host, driven by
 // keyframed paths and layered procedural gestures on top of idle / walk cycles.
@@ -47,7 +47,7 @@ const GESTURES = {
 };
 
 export class Presenter {
-  constructor(gltf) {
+  constructor(gltf, logos) {
     this.root = new THREE.Group();
     this.model = gltf.scene;
     this.root.add(this.model);
@@ -59,29 +59,11 @@ export class Presenter {
         o.frustumCulled = false;
       }
     });
-    // Restyle: glossy black suit shell, graphite-metal joints.
-    const suit = new THREE.MeshPhysicalMaterial({
-      color: 0x060607,
-      metalness: 0.15,
-      roughness: 0.42,
-      clearcoat: 0.3,
-      clearcoatRoughness: 0.35,
-      envMapIntensity: 0.35,
-      sheen: 0.4,
-      sheenColor: new THREE.Color(0x6a6f7a),
-    });
-    const joints = new THREE.MeshPhysicalMaterial({
-      color: 0x2a2b30,
-      metalness: 1,
-      roughness: 0.3,
-      clearcoat: 0.6,
-      envMapIntensity: 0.6,
-    });
+    // Restyle: a tailored black suit painted onto the figure by body region.
+    const suit = suitMaterial(logos);
     this.model.traverse((o) => {
-      if (!o.isMesh) return;
-      o.material = o.name.includes('Joints') ? joints : suit;
+      if (o.isMesh) o.material = suit;
     });
-    this._addAccents();
 
     this.mixer = new THREE.AnimationMixer(this.model);
     const clip = (n) => gltf.animations.find((a) => a.name === n);
@@ -95,29 +77,6 @@ export class Presenter {
     this.idleDur = clip('idle').duration;
     this._q = new THREE.Quaternion();
     this._e = new THREE.Euler();
-  }
-
-  _addAccents() {
-    // Thin dark-red chest line + silver collar ring: reads as a tailored tech suit.
-    const spine = this.bones.Spine2;
-    const neck = this.bones.Neck;
-    const red = new THREE.MeshBasicMaterial({ color: new THREE.Color(C.redHot).multiplyScalar(0.55), toneMapped: false });
-    const line = new THREE.Mesh(new THREE.BoxGeometry(1.2, 22, 1.2), red);
-    // bone space is in centimetres (armature is scaled 0.01)
-    line.position.set(0, 4, 13.2);
-    line.rotation.x = -0.12;
-    spine.add(line);
-    const pin = new THREE.Mesh(new THREE.SphereGeometry(1.4, 16, 12), red);
-    pin.position.set(-7.5, 10, 12.2);
-    spine.add(pin);
-    this.pin = pin;
-    const collar = new THREE.Mesh(
-      new THREE.TorusGeometry(6.4, 0.7, 10, 40),
-      new THREE.MeshPhysicalMaterial({ color: C.silver, metalness: 1, roughness: 0.15 }),
-    );
-    collar.rotation.x = Math.PI / 2;
-    collar.position.set(0, 2, 0.5);
-    neck.add(collar);
   }
 
   /**
@@ -220,4 +179,123 @@ function angleLerp(a, b, u) {
   while (d > Math.PI) d -= 2 * Math.PI;
   while (d < -Math.PI) d += 2 * Math.PI;
   return a + d * u;
+}
+
+// ── Suit ─────────────────────────────────────────────────────────────────────
+// Regions are decided from the bind-pose (T-pose) position of each vertex, in metres:
+// feet at y=0, neck ≈ 1.50, arms along ±x with the wrists at |x| ≈ 0.69, front = +z.
+function suitMaterial(logos) {
+  const mat = new THREE.MeshPhysicalMaterial({
+    color: 0xffffff,
+    roughness: 0.6,
+    metalness: 0,
+    sheen: 0.35,
+    sheenRoughness: 0.6,
+    sheenColor: new THREE.Color(0x3a3d44),
+    envMapIntensity: 0.55,
+  });
+  const emblem = emblemTexture(logos);
+  mat.onBeforeCompile = (shader) => {
+    shader.uniforms.uEmblem = { value: emblem };
+    shader.vertexShader = 'varying vec3 vBind;\n' + shader.vertexShader.replace(
+      '#include <begin_vertex>',
+      '#include <begin_vertex>\n  vBind = position;',
+    );
+    shader.fragmentShader =
+      'varying vec3 vBind;\nuniform sampler2D uEmblem;\n' +
+      SUIT_GLSL +
+      shader.fragmentShader
+        .replace(
+          '#include <color_fragment>',
+          '#include <color_fragment>\n  vec3 sCol; float sRough; float sMetal; float sGlow;\n  suit(vBind, sCol, sRough, sMetal, sGlow);\n  diffuseColor.rgb = sCol;',
+        )
+        .replace('#include <roughnessmap_fragment>', '#include <roughnessmap_fragment>\n  roughnessFactor = sRough;')
+        .replace('#include <metalnessmap_fragment>', '#include <metalnessmap_fragment>\n  metalnessFactor = sMetal;')
+        .replace('#include <emissivemap_fragment>', '#include <emissivemap_fragment>\n  totalEmissiveRadiance += sCol * sGlow;');
+  };
+  return mat;
+}
+
+const SUIT_GLSL = /* glsl */ `
+const vec3 GOLD = vec3(0.62, 0.42, 0.14);
+const vec3 SHIRT = vec3(0.78, 0.79, 0.82);
+float h3(vec3 p) { return fract(sin(dot(p, vec3(127.1, 311.7, 74.7))) * 43758.5453); }
+void suit(vec3 p, out vec3 col, out float rough, out float metal, out float glow) {
+  float ax = abs(p.x);
+  bool front = p.z > 0.02;
+  // black wool twill
+  float tw = sin((p.x * 0.7 + p.y) * 950.0) * 0.5 + 0.5;
+  float n = h3(floor(p * 420.0));
+  vec3 wool = vec3(0.010, 0.010, 0.012) * (0.8 + 0.3 * tw + 0.25 * n);
+  col = wool; rough = 0.66 + 0.1 * tw; metal = 0.0; glow = 0.0;
+
+  if (p.y < 0.105) { col = vec3(0.005); rough = 0.16; return; }                         // patent shoes
+  if (p.y > 1.515 && ax < 0.14) { col = vec3(0.006, 0.006, 0.007); rough = 0.09; metal = 0.5; return; } // obsidian head
+  if (ax > 0.695 && p.y > 1.3) { col = vec3(0.007); rough = 0.36; return; }            // leather gloves
+  if (ax > 0.665 && p.y > 1.3) { col = SHIRT; rough = 0.55; return; }                   // shirt cuffs
+  if (p.y < 0.86 && ax < 0.26) {                                                        // trousers
+    float crease = smoothstep(0.005, 0.0, abs(ax - 0.1)) * step(0.0, p.z);
+    col = wool * 1.08 + crease * 0.008;
+    return;
+  }
+  if (p.y > 1.455 && ax < 0.075) {                                                      // collar + knot
+    col = SHIRT; rough = 0.55;
+    if (front && ax < 0.021 && p.y < 1.49) { col = vec3(0.008); rough = 0.3; }
+    return;
+  }
+  if (front && p.y > 1.21 && ax < 0.3) {
+    float v = min((p.y - 1.21) * 0.2, 0.046);                                           // V opening
+    if (ax < v) {
+      col = SHIRT; rough = 0.55;
+      float tieW = 0.011 + (1.45 - p.y) * 0.035;
+      if (ax < tieW) {
+        float stripe = step(0.82, fract((p.y + p.x) * 55.0));
+        col = mix(vec3(0.009, 0.009, 0.011), GOLD * 0.35, stripe); rough = 0.28;
+      }
+      if (abs(p.y - 1.31) < 0.004 && ax < 0.028) { col = GOLD; metal = 1.0; rough = 0.22; } // tie clip
+      return;
+    }
+    if (ax < v + 0.034 && p.y > 1.23) {                                                 // satin lapels
+      col = vec3(0.014, 0.014, 0.016); rough = 0.24;
+      if (abs(ax - v - 0.034) < 0.0025) { col = GOLD * 0.5; metal = 1.0; rough = 0.3; } // gold piping
+      return;
+    }
+  }
+  if (front) {
+    float b1 = length(vec2(p.x, p.y - 1.12));
+    float b2 = length(vec2(p.x, p.y - 1.03));
+    if (min(b1, b2) < 0.011) { col = GOLD; metal = 1.0; rough = 0.25; return; }        // buttons
+    vec2 uv = (p.xy - vec2(0.097, 1.335)) / 0.062 + 0.5;                                // BR emblem, wearer's left
+    if (uv.x > 0.0 && uv.x < 1.0 && uv.y > 0.0 && uv.y < 1.0 && p.x > 0.0) {
+      float e = texture2D(uEmblem, uv).a;
+      col = mix(col, GOLD * (0.85 + 0.3 * n), e);
+      metal = mix(metal, 1.0, e);
+      rough = mix(rough, 0.32, e);
+      glow = e * 0.35;
+    }
+  }
+}
+`;
+
+function emblemTexture(logos) {
+  // Gold-thread BR emblem, drawn from the traced logo outline.
+  const c = document.createElement('canvas');
+  c.width = c.height = 256;
+  const g = c.getContext('2d');
+  g.translate(128, 120);
+  g.scale(1, -1);
+  g.fillStyle = '#fff';
+  for (const sh of logoShapes(logos.br, 150)) {
+    g.beginPath();
+    for (const ring of [sh.getPoints(), ...sh.holes.map((h) => h.getPoints())]) {
+      ring.forEach((pt, i) => (i ? g.lineTo(pt.x, pt.y) : g.moveTo(pt.x, pt.y)));
+      g.closePath();
+    }
+    g.fill('evenodd');
+  }
+  g.setTransform(1, 0, 0, 1, 0, 0);
+  g.fillRect(78, 222, 100, 8);
+  const t = new THREE.CanvasTexture(c);
+  t.anisotropy = 4;
+  return t;
 }

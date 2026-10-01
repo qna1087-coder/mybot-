@@ -8,11 +8,12 @@
 //   {gap: s}               advance the cursor by s seconds
 //   {vo: 'text'}           narration + caption; advances the cursor
 //   {t: 'text', ...}       on-screen title starting at cursor + (o || 0), lasting d seconds
+//                          (or ending just before the mark named by `until`)
 //   {sfx: 'kind', o}       sound-design cue (read by tools/soundtrack.py)
 
 const WORD = 0.3; // seconds per spoken word (calm, authoritative Iraqi narration)
 const PAD = 0.35; // breath per line
-const BETWEEN = 0.18; // gap between consecutive lines
+const BETWEEN = 0.12; // gap between consecutive lines
 
 export const EVENTS = [
   // ── SCENE 1 — INTRODUCTION ────────────────────────────────────────────────
@@ -170,19 +171,19 @@ export const EVENTS = [
   { sfx: 'impact', o: 0 },
   { gap: 0.4 },
   { m: 'div1' },
-  { t: '01|جماعة العمليات', cls: 'div', d: 6.2, o: 0 },
+  { t: '01|جماعة العمليات', cls: 'div', until: 'div2', o: 0 },
   { sfx: 'hit', o: 0 },
   { vo: 'القسم الأول هو جماعة العمليات.' },
   { vo: 'هذا القسم مسؤول عن الأنظمة، التشغيل، الأتمتة،' },
   { vo: 'الإدارة التقنية، ومتابعة البنية.' },
   { m: 'div2' },
-  { t: '02|جماعة الاستخبارات', cls: 'div', d: 6.8, o: 0 },
+  { t: '02|جماعة الاستخبارات', cls: 'div', until: 'div3', o: 0 },
   { sfx: 'hit', o: 0 },
   { vo: 'القسم الثاني هو جماعة الاستخبارات.' },
   { vo: 'يركز على البحث، التحليل، ترتيب المعلومات،' },
   { vo: 'استخدام أدوات البيانات، والاستفادة من الـ Agent.' },
   { m: 'div3' },
-  { t: '03|جماعة التجارة', cls: 'div', d: 7.4, o: 0 },
+  { t: '03|جماعة التجارة', cls: 'div', until: 's14', o: 0 },
   { sfx: 'hit', o: 0 },
   { vo: 'القسم الثالث هو جماعة التجارة.' },
   { vo: 'يركز على الخدمات، التعاملات، الشراكات، وتنظيم الجانب التجاري.' },
@@ -193,8 +194,8 @@ export const EVENTS = [
   { sfx: 'whoosh', o: 0 },
   { gap: 0.4 },
   { vo: 'وبالنهاية… الفكرة بينا بسيطة.' },
-  { t: 'إنت تفيدنا', cls: 'ar-xl-top', d: 5.4, o: 0 },
-  { t: 'وإحنا نفيدك', cls: 'ar-xl-bot', d: 4.6, o: 0.9 },
+  { t: 'إنت تفيدنا', cls: 'ar-xl-top', until: 'flow', o: 0 },
+  { t: 'وإحنا نفيدك', cls: 'ar-xl-bot', until: 'flow', o: 0.9 },
   { sfx: 'hit', o: 0 },
   { sfx: 'hit', o: 0.9 },
   { vo: 'إنت تفيدنا بخبرتك.' },
@@ -256,10 +257,10 @@ export const EVENTS = [
   { gap: 2.6 },
   { m: 'finalLogo' },
   { sfx: 'impact', o: 0 },
-  { t: 'EST. 2022', cls: 'end-1', d: 13.2, o: 0.8 },
-  { t: 'REORGANIZED 2026', cls: 'end-2', d: 12.4, o: 1.6 },
-  { t: 'TECHNOLOGY · INTELLIGENCE · COMMERCE', cls: 'end-3', d: 11.4, o: 2.6 },
-  { t: 'POWERED BY PERA', cls: 'end-4', d: 10.4, o: 3.6 },
+  { t: 'EST. 2022', cls: 'end-1', until: 'fade', o: 0.8 },
+  { t: 'REORGANIZED 2026', cls: 'end-2', until: 'fade', o: 1.6 },
+  { t: 'TECHNOLOGY · INTELLIGENCE · COMMERCE', cls: 'end-3', until: 'fade', o: 2.6 },
+  { t: 'POWERED BY PERA', cls: 'end-4', until: 'fade', o: 3.6 },
   { gap: 0.4 },
   { vo: 'BR. أكثر من مجرد تيم.' },
   { vo: 'منظمة مبنية على الخبرة، التقنية، والتنظيم.' },
@@ -275,13 +276,16 @@ export const EVENTS = [
   { m: 'end' },
 ];
 
-function lineDuration(text) {
+// When the voice-over has been generated (tools/voiceover.py), each line lasts exactly
+// as long as its recording; otherwise the length is estimated from the word count.
+function lineDuration(text, vo) {
+  if (vo[text]) return vo[text].dur + 0.12;
   const words = text.split(/\s+/).filter(Boolean).length;
   const ellipses = (text.match(/…/g) || []).length;
   return words * WORD + PAD + ellipses * 0.25;
 }
 
-export function buildCues() {
+export function buildCues(vo = {}) {
   const marks = {};
   const captions = [];
   const titles = [];
@@ -291,13 +295,14 @@ export function buildCues() {
     if (e.m) marks[e.m] = cursor;
     else if (e.gap !== undefined) cursor += e.gap;
     else if (e.vo) {
-      const d = lineDuration(e.vo);
-      captions.push({ start: cursor, end: cursor + d, text: e.vo });
+      const d = lineDuration(e.vo, vo);
+      captions.push({ start: cursor, end: cursor + d, text: e.vo, file: vo[e.vo]?.file });
       cursor += d + BETWEEN;
     } else if (e.t) {
       const start = cursor + (e.o || 0);
-      titles.push({ start, end: start + e.d, text: e.t, cls: e.cls, slot: e.slot || 0 });
+      titles.push({ start, end: start + (e.d || 0), until: e.until, text: e.t, cls: e.cls, slot: e.slot || 0 });
     } else if (e.sfx) sfx.push({ time: cursor + (e.o || 0), kind: e.sfx });
   }
+  for (const ti of titles) if (ti.until) ti.end = marks[ti.until] - 0.15;
   return { marks, captions, titles, sfx, duration: marks.end };
 }

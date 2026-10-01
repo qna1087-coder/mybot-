@@ -6,7 +6,9 @@ import {
   easeIn,
   easeInOut,
   easeOut,
+  beamMaterial,
   extrudeLogo,
+  gold,
   glowMat,
   glowTexture,
   holoPanel,
@@ -46,7 +48,7 @@ export function buildTimeline(ctx) {
     e.position.set(6, 0.02, TL_Z + z);
     g.add(e);
   }
-  const underMat = glowMat(C.redHot, 0.5);
+  const underMat = glowMat(C.goldHot, 0.5);
   const under = new THREE.Mesh(new THREE.BoxGeometry(190, 0.04, 0.04), underMat);
   under.position.set(6, -1.4, TL_Z);
   g.add(under);
@@ -92,16 +94,16 @@ export function buildTimeline(ctx) {
         transparent: true,
         blending: THREE.AdditiveBlending,
         depthWrite: false,
-        color: y === '2026' ? 0xff3344 : 0xdfe6ff,
+        color: y === '2026' ? 0xffcf80 : 0xdfe6ff,
         toneMapped: false,
       }),
     );
     back.position.set(x - 3.2, 2, TL_Z - 6);
     g.add(back);
-    const pillar = new THREE.Mesh(new THREE.PlaneGeometry(0.06, 90), glowMat(y === '2026' ? C.redHot : 0xffffff, 0.5));
+    const pillar = new THREE.Mesh(new THREE.PlaneGeometry(0.06, 90), glowMat(y === '2026' ? C.goldHot : 0xffffff, 0.5));
     pillar.position.set(x + 1.6, 0, TL_Z - 1.9);
     g.add(pillar);
-    const ringM = new THREE.Mesh(new THREE.RingGeometry(1.5, 1.58, 96), glowMat(y === '2026' ? C.redHot : 0xffffff, 0.8));
+    const ringM = new THREE.Mesh(new THREE.RingGeometry(1.5, 1.58, 96), glowMat(y === '2026' ? C.goldHot : 0xffffff, 0.8));
     ringM.rotation.x = -Math.PI / 2;
     ringM.position.set(x + 1.6, 0.02, TL_Z);
     g.add(ringM);
@@ -152,7 +154,7 @@ export function buildTimeline(ctx) {
   d22.add(rootLogo);
   const diag = [];
   for (let i = 0; i < 3; i++) {
-    const m = new THREE.Mesh(new THREE.TorusGeometry(7 + i * 2.2, 0.015, 4, 160), glowMat(i === 1 ? C.redHot : 0xffffff, 0));
+    const m = new THREE.Mesh(new THREE.TorusGeometry(7 + i * 2.2, 0.015, 4, 160), glowMat(i === 1 ? C.goldHot : 0xffffff, 0));
     m.position.set(0, 8.5, -3);
     diag.push(m);
     d22.add(m);
@@ -176,7 +178,7 @@ export function buildTimeline(ctx) {
       const b = new THREE.Mesh(new THREE.BoxGeometry(1.4, h, 1.4), metal(0x17181d, 0.3));
       b.position.set((i - 1.5) * 3.2, 2.75 + h / 2, (j - 1) * 3.2);
       d23.add(b);
-      const s = new THREE.Mesh(new THREE.PlaneGeometry(0.1, h * 0.85), glowMat(j === 1 && i === 2 ? C.redHot : 0xffffff, 0));
+      const s = new THREE.Mesh(new THREE.PlaneGeometry(0.1, h * 0.85), glowMat(j === 1 && i === 2 ? C.goldHot : 0xffffff, 0));
       s.position.copy(b.position).add(new THREE.Vector3(0, 0, 0.71));
       d23.add(s);
       blocks.push({ s, order: i * 3 + j });
@@ -192,7 +194,7 @@ export function buildTimeline(ctx) {
     const a = (i / 4) * Math.PI * 2 + 0.4;
     const m = new THREE.Mesh(new THREE.CylinderGeometry(1.6, 1.6, 0.3, 6), metal(0x1d1e24, 0.3));
     m.position.set(Math.cos(a) * 12.5, 3.6, Math.sin(a) * 6);
-    const e = new THREE.LineSegments(new THREE.EdgesGeometry(m.geometry), glowMat(i === 0 ? C.redHot : 0xffffff, 0));
+    const e = new THREE.LineSegments(new THREE.EdgesGeometry(m.geometry), glowMat(i === 0 ? C.goldHot : 0xffffff, 0));
     m.add(e);
     d23.add(m);
     return { m, e, i };
@@ -236,7 +238,8 @@ export function buildTimeline(ctx) {
   g.add(cube);
   // frozen logo (separate so it can fly out)
   const frozenMat = metal(0xc8ccd6, 0.2, { emissive: new THREE.Color(0x8fa4c8), emissiveIntensity: 0 });
-  const heart = extrudeLogo(logos.br, 2.2, 0.38, frozenMat);
+  const heartGold = gold(0.2, { emissive: new THREE.Color(0xffc46a), emissiveIntensity: 0 });
+  const heart = extrudeLogo(logos.br, 2.2, 0.38, [frozenMat, heartGold]);
   heart.position.copy(CUBE_POS);
   g.add(heart);
   // shards
@@ -251,20 +254,33 @@ export function buildTimeline(ctx) {
   const fin = new THREE.Group();
   fin.position.copy(FINAL_POS);
   const bigMat = metal(0xe4e7ee, 0.32, { metalness: 0.85, clearcoat: 1, clearcoatRoughness: 0.1, envMapIntensity: 1.7, transparent: true, opacity: 0 });
-  const big = extrudeLogo(logos.br, 26, 3.6, bigMat, 0.03);
+  const bigGold = gold(0.22, { envMapIntensity: 1.8, transparent: true, opacity: 0 });
+  const big = extrudeLogo(logos.br, 26, 3.6, [bigMat, bigGold], 0.03);
+  // god rays behind the final logo
+  const rays = [];
+  for (let i = 0; i < 7; i++) {
+    const m = new THREE.Mesh(new THREE.CylinderGeometry(0.4, 9, 120, 32, 1, true), beamMaterial(i % 2 ? 0xffd9a0 : 0xffffff, 0));
+    m.geometry.translate(0, 60, 0);
+    m.position.set(0, 0, -8);
+    m.rotation.z = (i / 7) * Math.PI * 2;
+    m.rotation.x = -0.35;
+    fin.add(m);
+    rays.push(m);
+  }
   fin.add(big);
   const bigLine = logoOutline(logos.br, 26, 0xffffff, 0);
   bigLine.position.z = 1.9;
   fin.add(bigLine);
   const NC = 3000;
   const conv = pointCloud(NC, sprite, 1.6);
+  conv.userData.gold = true;
   const convData = [];
   const targets = sampleLogo(logos.br, 26, NC, r);
   for (let i = 0; i < NC; i++) {
     const dir = new THREE.Vector3(r() - 0.5, r() - 0.5, r() - 0.5).normalize();
     const from = dir.multiplyScalar(90 + r() * 120);
     from.z += 60;
-    convData.push({ from, to: targets[i], d: r() * 0.9, red: r() < 0.12 });
+    convData.push({ from, to: targets[i], d: r() * 0.9, red: r() < 0.3 });
   }
   fin.add(conv);
   g.add(fin);
@@ -321,7 +337,7 @@ export function buildTimeline(ctx) {
       if (!recap) p.y += Math.sin(t * 0.8 + i) * 0.15 * (1 - u);
       npos.setXYZ(i, p.x, p.y, p.z);
       const v = (recap ? live[2022] : appear) * (n.li === 0 ? 1 : 0.7);
-      ncol.setXYZ(i, v, n.li === 0 ? v * 0.3 : v, n.li === 0 ? v * 0.35 : v);
+      ncol.setXYZ(i, v, n.li === 0 ? v * 0.8 : v, n.li === 0 ? v * 0.45 : v);
       dummy.position.copy(p);
       dummy.scale.setScalar(Math.max(0.001, recap ? live[2022] : appear));
       dummy.updateMatrix();
@@ -385,9 +401,11 @@ export function buildTimeline(ctx) {
     heart.position.y += Math.sin(fly * Math.PI) * 2.5 + Math.sin(t * 0.8) * 0.06;
     heart.rotation.y = shattered ? (1 - fly) * Math.PI * 2 + Math.sin(t * 0.3) * 0.15 : 0.35;
     heart.scale.setScalar(lerp(1, 1.5, fly));
-    heart.material.emissive.setHex(shattered ? 0xff1a2a : 0x8fa4c8);
-    heart.material.emissiveIntensity = shattered ? 0.35 * (1 - clamp(st / 2.5)) + 0.04 : 0.12 + freeze * 0.1;
-    heart.material.envMapIntensity = lerp(0.35, 1.3, smooth(ramp(t, M.s5, M.shatter + 0.5)));
+    frozenMat.emissive.setHex(shattered ? 0xffc46a : 0x8fa4c8);
+    frozenMat.emissiveIntensity = shattered ? 0.35 * (1 - clamp(st / 2.5)) + 0.04 : 0.12 + freeze * 0.1;
+    frozenMat.envMapIntensity = lerp(0.35, 1.3, smooth(ramp(t, M.s5, M.shatter + 0.5)));
+    heartGold.emissiveIntensity = shattered ? 0.6 * (1 - clamp(st / 2.5)) : 0;
+    heartGold.envMapIntensity = frozenMat.envMapIntensity;
     heart.visible = !recap && t < M.s6;
 
     // Final convergence
@@ -406,7 +424,7 @@ export function buildTimeline(ctx) {
       cpos.setXYZ(i, x, y, z);
       const vis = ct > c.d - 0.3 ? smooth((ct - c.d + 0.3) / 0.5) : 0;
       const v = vis * (1 - landed * 0.85) * (0.5 + u * 0.8);
-      if (c.red) ccol.setXYZ(i, v, v * 0.15, v * 0.2);
+      if (c.red) ccol.setXYZ(i, v, v * 0.78, v * 0.42);
       else ccol.setXYZ(i, v, v, v);
     }
     cpos.needsUpdate = ccol.needsUpdate = true;
@@ -414,6 +432,13 @@ export function buildTimeline(ctx) {
     bigMat.opacity = smooth(ramp(t, M.finalLogo - 0.2, M.finalLogo + 0.6));
     bigMat.transparent = bigMat.opacity < 1;
     bigMat.depthWrite = bigMat.opacity > 0.5;
+    bigGold.opacity = bigMat.opacity;
+    bigGold.transparent = bigMat.transparent;
+    bigGold.depthWrite = bigMat.depthWrite;
+    rays.forEach((m, i) => {
+      m.rotation.z = (i / 7) * Math.PI * 2 + t * 0.04;
+      m.material.uniforms.uStrength.value = smooth(ramp(t, M.finalLogo, M.finalLogo + 2)) * (0.5 + 0.3 * Math.sin(t * 0.7 + i)) * (1 - smooth(ramp(t, M.fade, M.fade + 1.5)));
+    });
     big.visible = bigMat.opacity > 0.001;
     bigLine.userData.mat.opacity = window01(t, M.finalLogo - 0.3, M.end, 0.2, 4) * (0.6 + 0.4 * Math.exp(-(t - M.finalLogo) * 1.5));
     fin.rotation.y = Math.sin(t * 0.15) * 0.06;

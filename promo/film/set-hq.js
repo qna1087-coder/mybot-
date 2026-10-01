@@ -7,6 +7,7 @@ import {
   easeInOut,
   easeOut,
   extrudeLogo,
+  gold,
   glowMat,
   holoPanel,
   label,
@@ -63,8 +64,8 @@ export function buildHQ(ctx) {
           float spokes = smoothstep(.012,.0,abs(sin(a*24.)))*step(5.,d)*step(d,20.5)*.35;
           float grid = (smoothstep(.02,.0,abs(fract(vP.x*.5)-.5)-.48)+smoothstep(.02,.0,abs(fract(vP.y*.5)-.5)-.48))*.0;
           float pulse = ring(d, uPulse*30., 1.2) * (1.-uPulse);
-          vec3 col = vec3(.85,.87,.92)*(lines*.5+spokes*.25)*uPower + vec3(1.,.12,.16)*pulse*1.2;
-          col += vec3(1.,.1,.14)*ring(d,4.6,.05)*uPower*.8;
+          vec3 col = vec3(.85,.87,.92)*(lines*.5+spokes*.25)*uPower + vec3(1.,.78,.42)*pulse*1.2;
+          col += vec3(1.,.74,.36)*ring(d,4.6,.05)*uPower*.8;
           float alpha = mix(.78, 1., smoothstep(18.,30.,d));
           gl_FragColor = vec4(col + vec3(.006,.006,.008), alpha);
         }`,
@@ -78,7 +79,7 @@ export function buildHQ(ctx) {
   const dais = new THREE.Mesh(new THREE.CylinderGeometry(4.3, 4.6, 0.35, 96), metal(C.graphite, 0.6));
   dais.position.set(LOGO_POS.x, 0.17, LOGO_POS.z);
   g.add(dais);
-  const daisRing = new THREE.Mesh(new THREE.TorusGeometry(4.35, 0.03, 8, 160), glowMat(C.redHot));
+  const daisRing = new THREE.Mesh(new THREE.TorusGeometry(4.35, 0.03, 8, 160), glowMat(C.goldHot));
   daisRing.rotation.x = Math.PI / 2;
   daisRing.position.set(LOGO_POS.x, 0.36, LOGO_POS.z);
   g.add(daisRing);
@@ -142,7 +143,8 @@ export function buildHQ(ctx) {
 
   // ── Hero logo (metal) ──
   const logoMat = metal(0xd8dbe2, 0.24, { clearcoat: 1, clearcoatRoughness: 0.08 });
-  const logo = extrudeLogo(logos.br, 2.6, 0.42, logoMat);
+  const logoGold = gold(0.18);
+  const logo = extrudeLogo(logos.br, 2.6, 0.42, [logoMat, logoGold]);
   logo.position.copy(LOGO_POS);
   g.add(logo);
   const logoGlow = logoOutline(logos.br, 2.6, 0xffffff, 0);
@@ -169,7 +171,7 @@ export function buildHQ(ctx) {
     sg.add(base);
     const edge = new THREE.LineSegments(
       new THREE.EdgesGeometry(new THREE.CylinderGeometry(8.05, 8.05, 0.02, 6)),
-      glowMat(i % 2 ? 0xffffff : C.redHot),
+      glowMat(i % 2 ? 0xffffff : C.goldHot),
     );
     edge.position.y = 0.42;
     sg.add(edge);
@@ -220,7 +222,7 @@ export function buildHQ(ctx) {
   const prof = new THREE.Group();
   const deptPos = [new THREE.Vector3(-8, 0.05, -4), new THREE.Vector3(0, 0.05, -9), new THREE.Vector3(8, 0.05, -4)];
   const deptRings = deptPos.map((p, i) => {
-    const m = new THREE.Mesh(new THREE.RingGeometry(1.9, 2.0, 96), glowMat(i === 1 ? 0xffffff : C.redHot, 0));
+    const m = new THREE.Mesh(new THREE.RingGeometry(1.9, 2.0, 96), glowMat(i === 1 ? 0xffffff : C.goldHot, 0));
     m.rotation.x = -Math.PI / 2;
     m.position.copy(p);
     prof.add(m);
@@ -260,7 +262,7 @@ export function buildHQ(ctx) {
     d.position.copy(p);
     const panels = [];
     for (let k = 0; k < 3; k++) {
-      const pn = holoPanel(500 + i * 10 + k, 3.2, 2, k === 0 ? divTitles[i] : '', i === 2 ? '#e9ecf2' : '#ff2a3a');
+      const pn = holoPanel(500 + i * 10 + k, 3.2, 2, k === 0 ? divTitles[i] : '', i === 2 ? '#e9ecf2' : '#e3bd72');
       pn.position.set((k - 1) * 3.4, k === 1 ? 0.5 : -0.2, k === 1 ? 0.3 : 0);
       pn.rotation.y = (1 - k) * 0.25;
       d.add(pn);
@@ -296,7 +298,7 @@ export function buildHQ(ctx) {
   const brLab = label('BR', 0.5, { weight: 600 });
   brLab.position.set(-5.5, 1.3, 0);
   flow.add(brLab);
-  const memNode = new THREE.Mesh(new THREE.SphereGeometry(0.35, 32, 24), glowMat(C.redHot, 0.9));
+  const memNode = new THREE.Mesh(new THREE.SphereGeometry(0.35, 32, 24), glowMat(C.goldHot, 0.9));
   memNode.position.x = 5.5;
   flow.add(memNode);
   const memLab = label('MEMBERS', 0.42, { weight: 600 });
@@ -326,8 +328,8 @@ export function buildHQ(ctx) {
   eco.add(ecoLogo);
   const ecoWords = ['AI', 'DATA', 'AUTOMATION', 'INFRASTRUCTURE', 'OPERATIONS', 'INTELLIGENCE', 'COMMERCE', 'PERA SERVICES'];
   const ecoItems = ecoWords.map((w, i) => {
-    const lb = label(w, 0.42, { weight: 600, glow: 10, tint: i === 7 ? 0xff5a66 : 0xffffff });
-    const node = new THREE.Mesh(new THREE.SphereGeometry(0.16, 16, 12), glowMat(i === 7 ? C.redHot : 0xffffff));
+    const lb = label(w, 0.42, { weight: 600, glow: 10, tint: i === 7 ? 0xffd58a : 0xffffff });
+    const node = new THREE.Mesh(new THREE.SphereGeometry(0.16, 16, 12), glowMat(i === 7 ? C.goldHot : 0xffffff));
     eco.add(lb, node);
     return { lb, node, a: (i / ecoWords.length) * Math.PI * 2 };
   });
@@ -378,7 +380,8 @@ export function buildHQ(ctx) {
 
     // Logo: the intro beam reveal, then quiet presence.
     const reveal = smooth(ramp(t, M.beam, M.logo + 0.4));
-    logo.material.envMapIntensity = 0.05 + reveal * 1.1;
+    logoMat.envMapIntensity = 0.05 + reveal * 1.1;
+    logoGold.envMapIntensity = 0.05 + reveal * 1.4;
     logo.rotation.y = Math.sin(t * 0.25) * 0.12 + (1 - smooth(ramp(t, 0, M.logo + 2))) * 0.5;
     logo.position.y = LOGO_POS.y + Math.sin(t * 0.7) * 0.05;
     logoGlow.rotation.copy(logo.rotation);
@@ -483,7 +486,7 @@ export function buildHQ(ctx) {
       fp.setXYZ(i, x, y, (c - 0.5) * 0.5);
       const v = flowOn * Math.sin(u * Math.PI);
       if (dir > 0) fc.setXYZ(i, v, v, v);
-      else fc.setXYZ(i, v, v * 0.2, v * 0.25);
+      else fc.setXYZ(i, v, v * 0.78, v * 0.45);
     });
     fp.needsUpdate = fc.needsUpdate = true;
 
@@ -536,7 +539,7 @@ function profileTexture() {
   g.beginPath();
   g.ellipse(0, 52, 56, 34, 0, Math.PI, 0);
   g.fill();
-  g.fillStyle = '#ff2a3a';
+  g.fillStyle = '#e3bd72';
   g.fillRect(-18, 80, 36, 5);
   const t = new THREE.CanvasTexture(c);
   t.colorSpace = THREE.SRGBColorSpace;

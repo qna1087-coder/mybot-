@@ -2,9 +2,10 @@
 
 Usage: python tools/soundtrack.py out/cues.json out/
 
-Writes music.wav, sfx.wav, mix.wav (music + sound design, ducked slightly under the
-narration windows so an Iraqi voice-over can be laid on top later), captions.srt and
-vo_cue_sheet.txt. Everything is procedural: no samples, no external assets.
+Writes voice.wav (the narration from assets/vo, processed), music.wav, sfx.wav,
+music_fx.wav (music + sound design with room left for a different voice-over),
+mix.wav (everything), captions.srt and vo_cue_sheet.txt. Music and sound design are
+procedural: no samples.
 """
 
 import json
@@ -370,6 +371,48 @@ def build_sfx(cues, length):
     return out
 
 
+# ── voice ────────────────────────────────────────────────────────────────────
+def read_wav_mono(path):
+    with wave.open(str(path)) as w:
+        sr = w.getframerate()
+        x = np.frombuffer(w.readframes(w.getnframes()), dtype="<i2").astype(np.float64) / 32768
+    return x, sr
+
+
+def compress(x, threshold=0.25, ratio=3.0, attack=0.005, release=0.12):
+    env = np.abs(x)
+    a = np.exp(-1 / (attack * SR))
+    r = np.exp(-1 / (release * SR))
+    e = np.zeros_like(env)
+    level = 0.0
+    for i, v in enumerate(env):
+        level = a * level + (1 - a) * v if v > level else r * level + (1 - r) * v
+        e[i] = level
+    gain = np.ones_like(e)
+    over = e > threshold
+    gain[over] = (threshold + (e[over] - threshold) / ratio) / e[over]
+    return x * gain
+
+
+def build_voice(cues, length, vo_dir):
+    n = int(length * SR)
+    out = np.zeros((n, 2))
+    for c in cues["captions"]:
+        if not c.get("file"):
+            continue
+        x, sr = read_wav_mono(vo_dir / c["file"])
+        if sr != SR:
+            g = np.gcd(SR, sr)
+            x = signal.resample_poly(x, SR // g, sr // g)
+        x = highpass(x, 80, 4)
+        x = x + 0.35 * lowpass(x, 220)  # warmth
+        x = x + 0.25 * bandpass(x, 2500, 6000)  # presence
+        x = compress(x / (np.max(np.abs(x)) + 1e-9))
+        x = x / (np.max(np.abs(x)) + 1e-9) * 0.8
+        place(out, stereo(x), c["start"])
+    return reverb(out, IR_MED, 0.12)
+
+
 # ── output ───────────────────────────────────────────────────────────────────
 def write_wav(path, x):
     x = np.clip(x, -1, 1)
@@ -405,16 +448,22 @@ def main():
 
     music = build_music(cues, length)
     sfx = build_sfx(cues, length)
-    # leave room for the voice-over: dip the music ~4 dB under each narration line
-    duck = np.ones(n)
+    voice = build_voice(cues, length, Path(__file__).resolve().parent.parent / "assets" / "vo")
+    # dip the music under each narration line (~8 dB with the voice, ~4 dB without)
+    talk = np.zeros(n)
     for c in cues["captions"]:
         a, b = int((c["start"] - 0.15) * SR), int((c["end"] + 0.25) * SR)
-        duck[max(a, 0) : b] = 0.63
-    duck = signal.filtfilt(*signal.butter(1, 3, fs=SR), duck)
-    mix = master(music * duck[:, None] * 0.9 + sfx * 0.85)
+        talk[max(a, 0) : b] = 1
+    talk = signal.filtfilt(*signal.butter(1, 3, fs=SR), talk)
+    bed = music * (1 - 0.6 * talk)[:, None] * 0.9 + sfx * (1 - 0.35 * talk)[:, None] * 0.85
+    bed_only = music * (1 - 0.37 * talk)[:, None] * 0.9 + sfx * 0.85
+    write_wav(outdir / "voice.wav", master(voice, 0.8))
     write_wav(outdir / "music.wav", master(music, 0.8))
     write_wav(outdir / "sfx.wav", master(sfx, 0.8))
-    write_wav(outdir / "mix.wav", mix)
+    write_wav(outdir / "music_fx.wav", master(bed_only))
+    pv = np.max(np.abs(voice)) + 1e-9
+    pb = np.max(np.abs(bed)) + 1e-9
+    write_wav(outdir / "mix.wav", master(voice / pv * 1.0 + bed / pb * 0.55))
 
     lines = []
     for i, c in enumerate(cues["captions"], 1):

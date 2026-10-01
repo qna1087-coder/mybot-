@@ -7,14 +7,14 @@ import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
 import { AfterimagePass } from 'three/addons/postprocessing/AfterimagePass.js';
 import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
-import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
+import { FullScreenQuad, Pass } from 'three/addons/postprocessing/Pass.js';
 
 import { buildCues } from './cues.js';
 import { beamMaterial, clamp, glowTexture, ramp, smooth, window01 } from './core.js';
 import { Overlay } from './overlay.js';
 import { Presenter, evalPresenter } from './presenter.js';
 import { LOGO_POS, buildHQ } from './set-hq.js';
-import { FINAL_POS, buildTimeline } from './set-timeline.js';
+import { CUBE_POS, FINAL_POS, RETURN_POS, buildTimeline } from './set-timeline.js';
 import { buildPera } from './set-pera.js';
 import { direction, evalCamera } from './direction.js';
 
@@ -29,14 +29,15 @@ async function init() {
   );
   await Promise.all(['200', '300', '600', '800'].map((w) => document.fonts.load(`${w} 40px "Sora"`, 'BR')));
 
-  const [logos, gltf, fontJson] = await Promise.all([
+  const [logos, gltf, fontJson, vo] = await Promise.all([
     fetch('../assets/logos.json').then((r) => r.json()),
     new GLTFLoader().loadAsync('../assets/presenter.glb'),
     new TTFLoader().loadAsync('../assets/fonts/Sora-800.ttf'),
+    fetch('../assets/vo/durations.json').then((r) => (r.ok ? r.json() : {})),
   ]);
   const font = new Font(fontJson);
 
-  const cues = buildCues();
+  const cues = buildCues(vo);
   const M = cues.marks;
   const dir = direction(M);
 
@@ -65,7 +66,7 @@ async function init() {
   const pera = buildPera(ctx);
   scene.add(hq.group, tl.group, pera.group);
 
-  const presenter = new Presenter(gltf);
+  const presenter = new Presenter(gltf, logos);
   scene.add(presenter.root);
   const shadow = new THREE.Mesh(
     new THREE.PlaneGeometry(2.4, 2.4),
@@ -77,7 +78,7 @@ async function init() {
   // Lighting: key + two rims follow the presenter wherever he stands.
   scene.add(new THREE.AmbientLight(0xffffff, 0.05));
   const key = new THREE.SpotLight(0xf4f6ff, 2.4, 0, 0.3, 0.6, 0);
-  const rimR = new THREE.SpotLight(0xff2a3a, 3.5, 0, 0.35, 0.6, 0);
+  const rimR = new THREE.SpotLight(0xffc875, 3, 0, 0.35, 0.6, 0);
   const rimW = new THREE.SpotLight(0xdfe6ff, 4, 0, 0.35, 0.6, 0);
   for (const l of [key, rimR, rimW]) scene.add(l, l.target);
   // Intro beam on the logo
@@ -98,13 +99,48 @@ async function init() {
   // Post
   const composer = new EffectComposer(renderer, new THREE.WebGLRenderTarget(W, H, { type: THREE.HalfFloatType, samples: 4 }));
   composer.addPass(new RenderPass(scene, camera));
-  const bloom = new UnrealBloomPass(new THREE.Vector2(W / 2, H / 2), 0.7, 0.5, 0.72);
+  const bloom = new UnrealBloomPass(new THREE.Vector2(W / 3, H / 3), 0.7, 0.5, 0.72);
   composer.addPass(bloom);
   const trail = new AfterimagePass(0);
   composer.addPass(trail);
+  const streak = new StreakPass(W, H);
+  composer.addPass(streak);
+  // one final pass: streak composite + grade + ACES tone mapping + sRGB output
   const grade = new ShaderPass(GradeShader);
+  grade.uniforms.tStreak.value = streak.rt.texture;
   composer.addPass(grade);
-  composer.addPass(new OutputPass());
+
+  // Foreground bokeh: soft out-of-focus motes drifting in front of the lens.
+  const BN = 46;
+  const bokeh = new THREE.Points(
+    new THREE.BufferGeometry(),
+    new THREE.PointsMaterial({ size: 0.34, map: bokehTexture(), vertexColors: true, transparent: true,
+      depthWrite: false, depthTest: false, blending: THREE.AdditiveBlending, toneMapped: false }),
+  );
+  bokeh.geometry.setAttribute('position', new THREE.BufferAttribute(new Float32Array(BN * 3), 3));
+  bokeh.geometry.setAttribute('color', new THREE.BufferAttribute(new Float32Array(BN * 3), 3));
+  bokeh.frustumCulled = false;
+  bokeh.renderOrder = 50;
+  camera.add(bokeh);
+  scene.add(camera);
+  const bseed = Array.from({ length: BN }, (_, i) => [Math.sin(i * 12.9898) * 0.5 + 0.5, Math.sin(i * 78.233) * 0.5 + 0.5, Math.sin(i * 37.719) * 0.5 + 0.5]);
+
+  // Shockwave rings on the big hits.
+  const waves = [
+    { at: M.logo, pos: LOGO_POS, size: 4.5 },
+    { at: M.shatter, pos: CUBE_POS, size: 6 },
+    { at: M.y2026, pos: RETURN_POS, size: 9 },
+    { at: M.split, pos: new THREE.Vector3(0, 6.4, -8), size: 12 },
+    { at: M.finalLogo, pos: FINAL_POS, size: 70 },
+  ];
+  const ring = new THREE.Mesh(
+    new THREE.RingGeometry(0.975, 1, 160),
+    new THREE.MeshBasicMaterial({ color: 0xffdca0, transparent: true, depthWrite: false,
+      blending: THREE.AdditiveBlending, toneMapped: false, side: THREE.DoubleSide }),
+  );
+  const ring2 = ring.clone();
+  ring2.material = ring.material.clone();
+  scene.add(ring, ring2);
 
   const overlay = new Overlay(cues);
   const prevCam = new THREE.Vector3();
@@ -122,12 +158,19 @@ async function init() {
     // camera
     const c = evalCamera(dir.cam, t);
     const c0 = evalCamera(dir.cam, Math.max(0, t - 1 / 30));
+    // gentle handheld breathing: a living camera, never a locked-off one
+    const br = 0.035;
+    c.pos.x += (Math.sin(t * 0.53) + Math.sin(t * 1.21 + 2) * 0.4) * br;
+    c.pos.y += (Math.sin(t * 0.71 + 1) + Math.sin(t * 1.37) * 0.3) * br * 0.7;
+    c.look.x += Math.sin(t * 0.44 + 3) * br * 0.8;
+    c.look.y += Math.sin(t * 0.62 + 5) * br * 0.6;
     camera.position.copy(c.pos);
     camera.lookAt(c.look);
     camera.fov = c.fov;
     camera.updateProjectionMatrix();
     const speed = c.pos.distanceTo(c0.pos) * 30;
     trail.uniforms.damp.value = clamp((speed - 12) / 70) * 0.72;
+    trail.enabled = trail.uniforms.damp.value > 0.01;
     prevCam.copy(c.pos);
 
     if (hqOn) hq.update(t);
@@ -150,7 +193,7 @@ async function init() {
     rimW.target.position.copy(ps.pos).setY(ps.pos.y + 1.3);
     const presence = t < M.hqReveal ? 0 : smooth(ramp(t, M.hqReveal, M.hqReveal + 1.5));
     key.intensity = 2.4 * presence * (1 - fx.cold * 0.35);
-    rimR.intensity = 3.5 * presence;
+    rimR.intensity = 3 * presence;
     rimW.intensity = 4 * presence;
 
     // intro beam
@@ -166,6 +209,36 @@ async function init() {
 
     scene.environmentIntensity = (0.12 + 0.78 * smooth(ramp(t, M.beam, M.hqReveal + 2))) * (1 - fx.cold * 0.4);
 
+    // bokeh motes
+    const bp = bokeh.geometry.attributes.position;
+    const bc = bokeh.geometry.attributes.color;
+    const bAmt = (0.5 + 0.5 * smooth(ramp(t, M.hqReveal, M.hqReveal + 3))) * (1 - fx.fade) * (1 - fx.cold * 0.6);
+    bseed.forEach(([a, b, c2], i) => {
+      const z = -1.6 - c2 * 3.5;
+      const x = ((a * 2 - 1) * 2.2 + Math.sin(t * 0.07 + i) * 0.4) * (-z / 2.5);
+      const y = ((b * 2 - 1) * 1.3 + Math.sin(t * 0.05 + i * 1.7) * 0.3) * (-z / 2.5);
+      bp.setXYZ(i, x, y, z);
+      const tw = 0.5 + 0.5 * Math.sin(t * (0.4 + c2) + i);
+      const v = bAmt * 0.11 * tw;
+      if (i % 3 === 0) bc.setXYZ(i, v, v * 0.82, v * 0.5);
+      else bc.setXYZ(i, v * 0.8, v * 0.82, v * 0.9);
+    });
+    bp.needsUpdate = bc.needsUpdate = true;
+
+    // shockwaves
+    const live = waves.filter((w) => t >= w.at && t < w.at + 1.8).slice(-2);
+    [ring, ring2].forEach((m, i) => {
+      const w = live[i];
+      m.visible = !!w;
+      if (!w) return;
+      const u = (t - w.at) / 1.8;
+      m.position.copy(w.pos);
+      m.quaternion.copy(camera.quaternion);
+      m.scale.setScalar(0.3 + w.size * (1 - Math.pow(1 - u, 3)));
+      m.material.opacity = Math.pow(1 - u, 2) * 1.1;
+    });
+
+    grade.uniforms.uStreak.value = 1 + fx.flash * 2;
     renderer.toneMappingExposure = fx.exposure;
     grade.uniforms.uTime.value = t;
     grade.uniforms.uCold.value = fx.cold;
@@ -177,7 +250,7 @@ async function init() {
     overlay.update(t, fx);
   }
 
-  window.film = { renderFrame, duration: cues.duration, cues, fps: 30, scene, hq, tl, pera, presenter };
+  window.film = { renderFrame, duration: cues.duration, cues, fps: 30, scene, hq, tl, pera, presenter, composer, passes: { bloom, streak, trail, grade } };
 
   if (params.has('play')) {
     const t0 = performance.now() - Number(params.get('t') || 0) * 1000;
@@ -204,7 +277,7 @@ function studioEnvironment(renderer) {
   panel(1.2, 10, 0xd8deea, [9, 2, -2], [0, -Math.PI / 2, 0]);
   panel(8, 1.2, 0xffffff, [0, 3, -9], [0, 0, 0]);
   panel(16, 6, 0x2c2f36, [0, 3, 9], [0, Math.PI, 0]);
-  panel(0.8, 4, 0x8a0e18, [-7, 1, 7], [0, Math.PI * 0.75, 0]);
+  panel(0.8, 4, 0x6b4f1d, [-7, 1, 7], [0, Math.PI * 0.75, 0]);
   const pm = new THREE.PMREMGenerator(renderer);
   const rt = pm.fromScene(env, 0.02);
   return rt.texture;
@@ -223,11 +296,61 @@ function shadowTexture() {
   return new THREE.CanvasTexture(c);
 }
 
+function bokehTexture() {
+  const c = document.createElement('canvas');
+  c.width = c.height = 128;
+  const g = c.getContext('2d');
+  const grd = g.createRadialGradient(64, 64, 0, 64, 64, 62);
+  grd.addColorStop(0, 'rgba(255,255,255,0.35)');
+  grd.addColorStop(0.78, 'rgba(255,255,255,0.45)');
+  grd.addColorStop(0.9, 'rgba(255,255,255,0.8)');
+  grd.addColorStop(1, 'rgba(255,255,255,0)');
+  g.fillStyle = grd;
+  g.beginPath();
+  g.arc(64, 64, 62, 0, Math.PI * 2);
+  g.fill();
+  return new THREE.CanvasTexture(c);
+}
+
+// Anamorphic lens streaks: bright highlights smear horizontally in warm gold.
+// The smear is computed at quarter resolution, then added back over the frame.
+const QUAD_VS = `varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix*modelViewMatrix*vec4(position,1.); }`;
+class StreakPass extends Pass {
+  constructor(w, h) {
+    super();
+    this.rt = new THREE.WebGLRenderTarget(w / 4, h / 4, { type: THREE.HalfFloatType });
+    this.blur = new THREE.ShaderMaterial({
+      uniforms: { tDiffuse: { value: null } },
+      vertexShader: QUAD_VS,
+      fragmentShader: /* glsl */ `
+        uniform sampler2D tDiffuse; varying vec2 vUv;
+        void main(){
+          vec3 s = vec3(0.);
+          for (int i = -24; i <= 24; i++) {
+            vec3 t = texture2D(tDiffuse, vUv + vec2(float(i) * 0.0045, 0.)).rgb;
+            s += max(t - 1.4, 0.) * exp(-abs(float(i)) * 0.09);
+          }
+          gl_FragColor = vec4(s, 1.);
+        }`,
+    });
+    this.quad = new FullScreenQuad();
+    this.needsSwap = false; // only fills this.rt; the grade pass composites it
+  }
+
+  render(renderer, _writeBuffer, readBuffer) {
+    this.blur.uniforms.tDiffuse.value = readBuffer.texture;
+    this.quad.material = this.blur;
+    renderer.setRenderTarget(this.rt);
+    this.quad.render(renderer);
+  }
+}
+
 const GradeShader = {
-  uniforms: { tDiffuse: { value: null }, uTime: { value: 0 }, uCold: { value: 0 } },
+  uniforms: { tDiffuse: { value: null }, tStreak: { value: null }, uStreak: { value: 1 }, uTime: { value: 0 },
+    uCold: { value: 0 } },
   vertexShader: `varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix*modelViewMatrix*vec4(position,1.); }`,
   fragmentShader: /* glsl */ `
-    uniform sampler2D tDiffuse; uniform float uTime, uCold; varying vec2 vUv;
+    uniform sampler2D tDiffuse, tStreak; uniform float uTime, uCold, uStreak; varying vec2 vUv;
     float hash(vec2 p){ return fract(sin(dot(p, vec2(12.9898,78.233)) + uTime*61.7) * 43758.5453); }
     void main(){
       vec2 d = vUv - .5;
@@ -237,9 +360,15 @@ const GradeShader = {
       col.r = texture2D(tDiffuse, vUv - off).r;
       col.g = texture2D(tDiffuse, vUv).g;
       col.b = texture2D(tDiffuse, vUv + off).b;
+      col += texture2D(tStreak, vUv).rgb * vec3(1.0, 0.82, 0.55) * 0.05 * uStreak;
       // cool, slightly desaturated look for the 2024 freeze
       float l = dot(col, vec3(.2126,.7152,.0722));
       col = mix(col, vec3(l)*vec3(.86,.93,1.08), uCold*.75);
+      // split-tone: cool shadows, warm highlights
+      float lum = dot(col, vec3(.2126,.7152,.0722));
+      col *= mix(vec3(.94,.98,1.06), vec3(1.05,1.0,.92), smoothstep(.05,.6,lum));
+      col = ACESFilmicToneMapping(col);
+      col = sRGBTransferOETF(vec4(col, 1.)).rgb;
       col *= 1. - smoothstep(.18, .75, r2*1.6) * .55;
       col += (hash(vUv*1000.) - .5) * .025;
       gl_FragColor = vec4(col, 1.);
