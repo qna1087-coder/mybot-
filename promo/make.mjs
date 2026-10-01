@@ -60,7 +60,7 @@ run('ffmpeg', ['-y', '-loglevel', 'error', '-i', 'out/video_only.mp4', '-i', 'ou
   '-map', '0:v', '-map', '1:a', '-map', '2:s', '-c:v', 'libx264', '-preset', 'slow', '-crf', '21', '-pix_fmt', 'yuv420p',
   '-movflags', '+faststart', '-c:a', 'aac', '-b:a', '256k', '-c:s', 'mov_text',
   '-metadata:s:a:0', 'title=Arabic voice-over + music & FX', '-metadata:s:s:0', 'language=ara',
-  '-shortest', 'release/BR_promo_1080p.mp4']);
+  'release/BR_promo_1080p.mp4']);
 for (const [src, dst] of [['mix.wav', 'BR_full_mix.wav'], ['voice.wav', 'BR_voice_stem.wav'],
   ['music_fx.wav', 'BR_music_fx_no_voice.wav'], ['music.wav', 'BR_music_stem.wav'], ['sfx.wav', 'BR_sfx_stem.wav'],
   ['captions.srt', 'BR_captions_ar.srt'], ['vo_cue_sheet.txt', 'BR_vo_cue_sheet.txt']])

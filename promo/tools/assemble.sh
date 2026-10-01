@@ -18,7 +18,7 @@ ffmpeg -y -loglevel error -i "$OUT/video_only.mp4" -i "$OUT/mix.wav" -i "$OUT/ca
   -c:v libx264 -preset slow -crf "${CRF:-21}" -pix_fmt yuv420p -movflags +faststart \
   -c:a aac -b:a 256k -c:s mov_text \
   -metadata:s:a:0 title="Arabic voice-over + music & FX" -metadata:s:s:0 language=ara \
-  -shortest "$REL/BR_promo_1080p.mp4"
+  "$REL/BR_promo_1080p.mp4"
 
 cp "$OUT/mix.wav" "$REL/BR_full_mix.wav"
 cp "$OUT/voice.wav" "$REL/BR_voice_stem.wav"
