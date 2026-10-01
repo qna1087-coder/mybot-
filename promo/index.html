@@ -1,0 +1,715 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<title>Vigil Promo</title>
+<style>
+@font-face{font-family:"Naskh";src:url(node_modules/@fontsource/noto-naskh-arabic/files/noto-naskh-arabic-arabic-500-normal.woff2) format("woff2");font-weight:500}
+@font-face{font-family:"Naskh";src:url(node_modules/@fontsource/noto-naskh-arabic/files/noto-naskh-arabic-arabic-700-normal.woff2) format("woff2");font-weight:700}
+@font-face{font-family:"Plex";src:url(node_modules/@fontsource/ibm-plex-sans-arabic/files/ibm-plex-sans-arabic-arabic-400-normal.woff2) format("woff2");font-weight:400}
+@font-face{font-family:"Plex";src:url(node_modules/@fontsource/ibm-plex-sans-arabic/files/ibm-plex-sans-arabic-arabic-500-normal.woff2) format("woff2");font-weight:500}
+@font-face{font-family:"Plex";src:url(node_modules/@fontsource/ibm-plex-sans-arabic/files/ibm-plex-sans-arabic-arabic-600-normal.woff2) format("woff2");font-weight:600}
+@font-face{font-family:"Plex";src:url(node_modules/@fontsource/ibm-plex-sans-arabic/files/ibm-plex-sans-arabic-latin-400-normal.woff2) format("woff2");font-weight:400;unicode-range:U+0000-00FF}
+@font-face{font-family:"Serif";src:url(node_modules/@fontsource/source-serif-4/files/source-serif-4-latin-400-normal.woff2) format("woff2");font-weight:400}
+@font-face{font-family:"Serif";src:url(node_modules/@fontsource/source-serif-4/files/source-serif-4-latin-600-normal.woff2) format("woff2");font-weight:600}
+@font-face{font-family:"Mono";src:url(node_modules/@fontsource/jetbrains-mono/files/jetbrains-mono-latin-400-normal.woff2) format("woff2");font-weight:400}
+@font-face{font-family:"Mono";src:url(node_modules/@fontsource/jetbrains-mono/files/jetbrains-mono-latin-500-normal.woff2) format("woff2");font-weight:500}
+
+:root{
+  --bg:#F0EEE6; --ivory:#FAF9F5; --ink:#141413; --ink2:#3D3D3A; --muted:#87867F;
+  --line:#D9D5C9; --clay:#D97757; --clay-d:#C96442; --olive:#788C5D; --sky:#6A9BCC;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{width:1920px;height:1080px;overflow:hidden;background:var(--bg);color:var(--ink)}
+body{font-family:"Plex",sans-serif;-webkit-font-smoothing:antialiased}
+#gl{position:absolute;inset:0;width:1920px;height:1080px}
+#ui{position:absolute;inset:0;pointer-events:none}
+.scene{position:absolute;inset:0;opacity:0}
+.side{position:absolute;right:130px;top:150px;width:760px}
+.kicker{font-family:"Mono";font-size:19px;letter-spacing:.18em;color:var(--clay-d);direction:ltr;text-align:right;margin-bottom:26px}
+.kicker b{color:var(--muted);font-weight:400;margin-right:16px}
+h1{font-family:"Naskh";font-weight:700;font-size:74px;line-height:1.25;letter-spacing:-.005em}
+h1 em{font-style:normal;color:var(--clay-d)}
+p.body{font-size:29px;line-height:1.75;color:var(--ink2);margin-top:26px;max-width:740px}
+.en{font-family:"Serif";direction:ltr;unicode-bidi:isolate}
+.mono{font-family:"Mono";direction:ltr;unicode-bidi:isolate}
+
+/* intro / outro */
+.center{position:absolute;left:0;right:0;text-align:center}
+.wordmark{font-family:"Serif";font-weight:400;font-size:150px;letter-spacing:-.03em;direction:ltr}
+.wordmark span{color:var(--clay)}
+.tag{font-family:"Naskh";font-weight:500;font-size:42px;color:var(--ink2)}
+.tag-en{font-family:"Serif";font-size:26px;color:var(--muted);direction:ltr;margin-top:10px}
+
+/* layer list */
+.layers{margin-top:34px;display:flex;flex-direction:column;gap:6px}
+.row{display:flex;align-items:center;gap:22px;height:58px;padding:0 22px;border-radius:12px;border:1px solid transparent;transition:none;position:relative}
+.row .n{font-family:"Mono";font-size:17px;color:var(--muted);width:30px;direction:ltr}
+.row .t{font-size:28px;font-weight:500;color:var(--ink2);flex:1}
+.row .e{font-family:"Serif";font-size:20px;color:var(--muted);direction:ltr}
+.row .s{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:19px;font-weight:600;color:#fff;transform:scale(0)}
+.row.active{background:var(--ivory);border-color:var(--line)}
+.row.active::before{content:"";position:absolute;right:-1px;top:12px;bottom:12px;width:4px;border-radius:4px;background:var(--clay)}
+.row.active .t{color:var(--ink)}
+.row.pass .s{background:var(--olive);transform:scale(1)}
+.row.block{background:#F6E4DB;border-color:#EBC3B1}
+.row.block .s{background:var(--clay-d);transform:scale(1)}
+.row.block .t{color:var(--clay-d)}
+.row.dim{opacity:.35}
+
+/* steps */
+.steps{display:flex;gap:14px;margin-top:40px}
+.step{flex:1;background:transparent;border:1px solid var(--line);border-radius:14px;padding:18px 18px 16px;opacity:.45}
+.step .n{font-family:"Mono";font-size:15px;color:var(--muted);direction:ltr;text-align:right}
+.step .t{font-size:22px;font-weight:600;margin-top:6px;color:var(--ink2);white-space:nowrap}
+.step.on{opacity:1;background:var(--ivory)}
+.step.on .n{color:var(--clay-d)}
+.step.now{border-color:var(--clay);box-shadow:0 0 0 3px rgba(217,119,87,.18)}
+
+/* notification card */
+.card{position:absolute;right:130px;top:600px;width:760px;background:var(--ivory);border:1px solid var(--line);border-radius:22px;padding:28px 32px;box-shadow:0 30px 60px -30px rgba(20,20,19,.25);opacity:0}
+.card .head{display:flex;align-items:center;gap:14px;font-size:26px;font-weight:600}
+.card .dot{width:14px;height:14px;border-radius:50%;background:var(--clay)}
+.card .meta{font-size:22px;color:var(--muted);margin-top:8px}
+.card .msg{font-size:24px;color:var(--ink2);margin-top:14px;line-height:1.6}
+.card .btn{display:inline-flex;align-items:center;gap:10px;margin-top:20px;background:var(--ink);color:var(--ivory);font-size:24px;font-weight:600;padding:14px 26px;border-radius:12px;position:relative}
+.card .ok{display:inline-flex;margin-top:20px;margin-right:18px;font-size:24px;font-weight:600;color:var(--olive);opacity:0}
+.cursor{position:absolute;width:34px;height:34px;border-radius:50%;border:3px solid var(--ink);background:rgba(250,249,245,.6);opacity:0;transform:translate(-50%,-50%)}
+
+/* shield clock */
+.clock{margin-top:44px;background:var(--ivory);border:1px solid var(--line);border-radius:18px;padding:26px 30px}
+.clock .top{display:flex;justify-content:space-between;align-items:center}
+.clock .st{font-size:24px;font-weight:600}
+.clock .tm{font-family:"Mono";font-size:26px;color:var(--ink2);direction:ltr}
+.bar{height:8px;border-radius:8px;background:#E8E4D8;margin-top:20px;overflow:hidden;direction:ltr}
+.bar i{display:block;height:100%;width:0;background:var(--clay);border-radius:8px}
+
+/* stats */
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:40px}
+.stat{background:var(--ivory);border:1px solid var(--line);border-radius:18px;padding:26px 28px 24px}
+.stat .v{font-family:"Serif";font-weight:600;font-size:66px;line-height:1;direction:ltr;text-align:right;letter-spacing:-.02em;color:var(--ink)}
+.stat .v small{font-size:30px;font-weight:400;color:var(--muted);margin-left:6px}
+.stat .l{font-size:22px;color:var(--ink2);margin-top:14px;line-height:1.5}
+.fine{position:absolute;right:130px;left:130px;bottom:60px;font-size:18px;color:var(--muted);line-height:1.6;border-top:1px solid var(--line);padding-top:16px}
+
+/* 3D-projected labels */
+.tag3d{position:absolute;transform:translate(-50%,-50%);white-space:nowrap;font-size:24px;font-weight:600;opacity:0}
+.pill{background:var(--ivory);border:1px solid var(--line);border-radius:999px;padding:8px 18px;box-shadow:0 8px 20px -12px rgba(20,20,19,.3)}
+.val3d{font-family:"Serif";font-weight:600;font-size:44px;direction:ltr}
+.cap3d{font-size:23px;color:var(--ink2);font-weight:500}
+.glyph3d{font-family:"Naskh";font-weight:700;font-size:30px;color:#fff}
+
+/* chrome */
+#mark{position:absolute;left:130px;top:64px;font-family:"Serif";font-size:30px;direction:ltr;opacity:0}
+#mark span{color:var(--clay)}
+#mark small{font-family:"Mono";font-size:15px;color:var(--muted);letter-spacing:.14em;margin-left:16px}
+#prog{position:absolute;left:130px;right:130px;bottom:34px;height:2px;background:transparent;direction:ltr;opacity:0}
+#prog i{display:block;height:100%;background:var(--line);width:0}
+
+.badges{display:flex;justify-content:center;gap:22px;margin-top:46px;direction:rtl}
+.badge{display:flex;align-items:center;gap:14px;border:1px solid var(--line);background:var(--ivory);border-radius:999px;padding:14px 30px;font-size:28px;color:var(--ink2)}
+.badge b{font-family:"Serif";font-weight:600;font-size:32px;color:var(--ink);direction:ltr}
+.badge .d{width:10px;height:10px;border-radius:50%;background:var(--clay)}
+.badge.h .d{background:var(--sky)}
+</style>
+<script type="importmap">{"imports":{"three":"./node_modules/three/build/three.module.js","three/addons/":"./node_modules/three/examples/jsm/"}}</script>
+</head>
+<body>
+<canvas id="gl"></canvas>
+<div id="ui">
+  <div id="mark">✦ <span>V</span>igil<small>BR · PERA</small></div>
+  <div id="prog"><i></i></div>
+
+  <!-- 1 intro -->
+  <div class="scene" id="s1">
+    <div class="center" style="top:640px">
+      <div class="wordmark" data-in="1.4"><span>V</span>igil</div>
+      <div class="tag" data-in="2.2">حماية هادئة ومستمرة لمشرفي قنوات تيليجرام</div>
+      <div class="tag-en" data-in="2.8">Calm, continuous protection for Telegram channel administrators</div>
+    </div>
+  </div>
+
+  <!-- 2 problem -->
+  <div class="scene" id="s2">
+    <div class="side" style="top:270px">
+      <div class="kicker" data-in=".3"><b>01</b>THE PROBLEM</div>
+      <h1 data-in=".6">منشور واحد مخالف…<br><em>يكفي.</em></h1>
+      <p class="body" data-in="1.4">قناتك يديرها أكثر من مشرف. منشور واحد فيه رابط، أو إعادة توجيه، أو محتوى مسيء، يضرّ بسمعتها في ثوانٍ، وغالبًا قبل أن تنتبه.</p>
+    </div>
+  </div>
+
+  <!-- 3 layers -->
+  <div class="scene" id="s3">
+    <div class="side" style="top:110px">
+      <div class="kicker" data-in=".2"><b>02</b>LAYERED GUARD · CHEAPEST FIRST</div>
+      <h1 data-in=".5" style="font-size:66px">ثماني طبقات، <em>بالترتيب.</em></h1>
+      <div class="layers" data-in="1.0">
+        <div class="row"><span class="n">01</span><span class="t">الوسائط</span><span class="e">Media</span><span class="s">✓</span></div>
+        <div class="row"><span class="n">02</span><span class="t">الإيموجي المميز</span><span class="e">Premium emoji</span><span class="s">✓</span></div>
+        <div class="row"><span class="n">03</span><span class="t">إعادة التوجيه</span><span class="e">Forwards</span><span class="s">✓</span></div>
+        <div class="row"><span class="n">04</span><span class="t">الروابط والمنشنات</span><span class="e">Links &amp; mentions</span><span class="s">✓</span></div>
+        <div class="row"><span class="n">05</span><span class="t">كشف نوع الكتابة</span><span class="e">Script</span><span class="s">✓</span></div>
+        <div class="row"><span class="n">06</span><span class="t">حدّ الـ ٧٥ حرفًا إنجليزيًا</span><span class="e">Length</span><span class="s">✓</span></div>
+        <div class="row"><span class="n">07</span><span class="t">قائمة الكلمات المحلية</span><span class="e">Wordlist</span><span class="s">✓</span></div>
+        <div class="row"><span class="n">08</span><span class="t">فحص بالذكاء الاصطناعي</span><span class="e">AI moderation</span><span class="s">✓</span></div>
+      </div>
+    </div>
+    <div class="tag3d pill" id="tok1">منشور</div>
+    <div class="tag3d pill" id="tok2">منشور فيه رابط</div>
+  </div>
+
+  <!-- 4 enforcement -->
+  <div class="scene" id="s4">
+    <div class="side" style="top:110px">
+      <div class="kicker" data-in=".2"><b>03</b>ENFORCEMENT</div>
+      <h1 data-in=".5" style="font-size:64px">يتصرّف في لحظة،<br><em>والقرار الأخير لك.</em></h1>
+      <div class="steps" data-in="1.0">
+        <div class="step"><div class="n">01</div><div class="t">حذف المنشور</div></div>
+        <div class="step"><div class="n">02</div><div class="t">حفظ الصلاحيات</div></div>
+        <div class="step"><div class="n">03</div><div class="t">تنزيل المشرف</div></div>
+        <div class="step"><div class="n">04</div><div class="t">إشعار المالك</div></div>
+      </div>
+    </div>
+    <div class="card" id="card">
+      <div class="head"><span class="dot"></span>مخالفة في «قناة الأخبار»</div>
+      <div class="meta">المشرف: أحمد · الطبقة: الروابط والمنشنات</div>
+      <div class="msg">حُذف المنشور ونُزّل المشرف. صلاحياته الكاملة محفوظة كما كانت.</div>
+      <span class="btn" id="btn">↻ إعادته مشرفًا</span><span class="ok" id="ok">✓ أُعيد بنفس الصلاحيات بالضبط</span>
+    </div>
+    <div class="cursor" id="cursor"></div>
+  </div>
+
+  <!-- 5 shield -->
+  <div class="scene" id="s5">
+    <div class="side" style="top:200px">
+      <div class="kicker" data-in=".2"><b>04</b>SHIELD MODE</div>
+      <h1 data-in=".5">وضع <em>الاحتماء</em></h1>
+      <p class="body" data-in="1.0">ينزّل كل المشرفين مؤقتًا، فورًا أو بجدول يومي وأسبوعي يعبر منتصف الليل، ثم يعيدهم تلقائيًا. حالته محفوظة في قاعدة البيانات، فلا تضيع حتى لو أُعيد تشغيل الخادم.</p>
+      <div class="clock" data-in="1.4">
+        <div class="top"><span class="st" id="clkst">جاهز</span><span class="tm" id="clktm">00:00 → 06:00</span></div>
+        <div class="bar"><i id="clkbar"></i></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 6 benchmark -->
+  <div class="scene" id="s6">
+    <div class="side" style="top:110px">
+      <div class="kicker" data-in=".2"><b>05</b>BENCHMARK</div>
+      <h1 data-in=".5" style="font-size:66px">أرقام من <em>الكود نفسه.</em></h1>
+      <div class="stats" data-in="1.0">
+        <div class="stat"><div class="v" id="st1">0%</div><div class="l">من المنشورات يُحسم أمرها محليًا، بلا أي طلب خارجي</div></div>
+        <div class="stat"><div class="v"><span id="st2">0.00</span><small>ms</small></div><div class="l">الزمن الوسيط لقرار الطبقات المحلية</div></div>
+        <div class="stat"><div class="v"><span id="st3">0.0</span><small>ms</small></div><div class="l">أبطأ ١٪ من القرارات المحلية <span class="mono" style="font-size:19px;color:#87867F">p99</span></div></div>
+        <div class="stat"><div class="v" id="st4">0/28</div><div class="l">اختبارًا آليًا ناجحًا</div></div>
+      </div>
+    </div>
+    <div class="tag3d cap3d" id="bcap" style="font-size:25px;color:#3D3D3A">طلبات الفحص الخارجي لكل ١٬٠٠٠ منشور</div>
+    <div class="tag3d val3d" id="bvA" style="color:#87867F">1,000</div>
+    <div class="tag3d val3d" id="bvB" style="color:#141413">200</div>
+    <div class="tag3d cap3d" id="blA">بدون الطبقات المحلية</div>
+    <div class="tag3d cap3d" id="blB">مع <span class="en" style="font-weight:600">Vigil</span></div>
+    <div class="tag3d pill" id="bdrop" style="color:#C96442;font-family:Serif;font-size:30px;direction:ltr">−80%</div>
+    <div class="fine" data-in="1.6">اختبار داخلي: ١٬٠٠٠ منشور تجريبي (عربي، مختلط، روابط، توجيه، وسائط، لغات أخرى) عبر خط الحماية الفعلي <span class="mono">GuardPipeline</span> على خادم واحد. استدعاء الذكاء الاصطناعي مُحاكى ولا يدخل زمنه في الأرقام. النتائج تختلف حسب محتوى القناة.</div>
+  </div>
+
+  <!-- 7 privacy -->
+  <div class="scene" id="s7">
+    <div class="side" style="top:300px">
+      <div class="kicker" data-in=".2"><b>06</b>PRIVACY</div>
+      <h1 data-in=".5">النص العربي<br><em>لا يغادر الخادم.</em></h1>
+      <p class="body" data-in="1.0">نوع الكتابة يُكتشف محليًا. وحده المقطع الإنجليزي يُرسل للفحص، بعد أن تمرّ عليه كل الطبقات المحلية.</p>
+    </div>
+    <div class="tag3d glyph3d" id="g0">ع</div>
+    <div class="tag3d glyph3d" id="g1">ر</div>
+    <div class="tag3d glyph3d" id="g2">ب</div>
+    <div class="tag3d glyph3d" id="g3" style="font-family:Serif;font-size:26px">Aa</div>
+    <div class="tag3d pill" id="gout" style="font-size:21px">إلى الفحص الخارجي ←</div>
+  </div>
+
+  <!-- 8 outro -->
+  <div class="scene" id="s8">
+    <div class="center" style="top:620px">
+      <div class="wordmark" data-in=".8"><span>V</span>igil</div>
+      <div class="tag" data-in="1.4">احمِ قناتك من الداخل.</div>
+      <div class="badges" data-in="2.2">
+        <div class="badge"><span class="d"></span>تابع لـ <b>BR</b></div>
+        <div class="badge h"><span class="d"></span>مستضاف على <b>Pera</b></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+import * as THREE from "three";
+import { RoundedBoxGeometry } from "three/addons/geometries/RoundedBoxGeometry.js";
+
+const W = 1920, H = 1080, DURATION = 64;
+const C = {
+  bg: 0xF0EEE6, ivory: 0xFAF9F5, ink: 0x141413, ink2: 0x3D3D3A, gray: 0xB0AEA5, cloud: 0xE3DACC,
+  clay: 0xD97757, clayD: 0xC96442, olive: 0x788C5D, sky: 0x6A9BCC,
+};
+const SC = { s1: [0, 6], s2: [6, 12], s3: [12, 28], s4: [28, 36], s5: [36, 43], s6: [43, 53], s7: [53, 57.5], s8: [57.5, 64] };
+
+// ---------- math ----------
+const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
+const prog = (t, a, b) => clamp((t - a) / (b - a));
+const eio = x => (x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2);
+const eout = x => 1 - Math.pow(1 - x, 3);
+const eback = x => { const c1 = 1.70158, c3 = c1 + 1; return 1 + c3 * Math.pow(x - 1, 3) + c1 * Math.pow(x - 1, 2); };
+const vis = (t, a, b, fi = 0.7, fo = 0.6) => Math.min(eout(prog(t, a, a + fi)), 1 - eio(prog(t, b - fo, b)));
+const lerp = (a, b, x) => a + (b - a) * x;
+const col = h => new THREE.Color(h);
+const mixCol = (a, b, x) => col(a).lerp(col(b), clamp(x));
+
+// ---------- renderer ----------
+const renderer = new THREE.WebGLRenderer({ canvas: document.getElementById("gl"), antialias: true, preserveDrawingBuffer: true });
+renderer.setPixelRatio(1);
+renderer.setSize(W, H, false);
+renderer.setClearColor(C.bg, 1);
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+renderer.toneMapping = THREE.NeutralToneMapping;
+renderer.toneMappingExposure = 1.0;
+
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(35, W / H, 0.1, 100);
+
+scene.add(new THREE.HemisphereLight(0xffffff, 0xd9d2c3, 1.6));
+const sun = new THREE.DirectionalLight(0xffffff, 2.4);
+sun.position.set(-6, 11, 8);
+sun.castShadow = true;
+sun.shadow.mapSize.set(2048, 2048);
+sun.shadow.camera.left = -12; sun.shadow.camera.right = 12; sun.shadow.camera.top = 10; sun.shadow.camera.bottom = -10;
+sun.shadow.radius = 6; sun.shadow.bias = -0.0004;
+scene.add(sun);
+const fill = new THREE.DirectionalLight(0xfff1e6, 0.6);
+fill.position.set(8, 2, 6);
+scene.add(fill);
+
+const ground = new THREE.Mesh(new THREE.PlaneGeometry(60, 60), new THREE.ShadowMaterial({ opacity: 0.09 }));
+ground.rotation.x = -Math.PI / 2; ground.position.y = -3.7; ground.receiveShadow = true;
+scene.add(ground);
+
+const std = (c, o = {}) => new THREE.MeshStandardMaterial({ color: c, roughness: 0.45, metalness: 0.05, transparent: true, ...o });
+const phys = (c, o = {}) => new THREE.MeshPhysicalMaterial({ color: c, roughness: 0.35, clearcoat: 1, clearcoatRoughness: 0.35, transparent: true, ...o });
+const lineMat = (c, o = 1) => new THREE.LineBasicMaterial({ color: c, transparent: true, opacity: o });
+const shadowy = m => { m.castShadow = true; m.receiveShadow = true; return m; };
+
+function setOpacity(obj, o) {
+  obj.visible = o > 0.002;
+  obj.traverse(m => {
+    if (!m.material) return;
+    (Array.isArray(m.material) ? m.material : [m.material]).forEach(mt => {
+      if (mt.userData.base === undefined) mt.userData.base = mt.opacity;
+      mt.opacity = mt.userData.base * o;
+      mt.depthWrite = o > 0.98 && mt.userData.base > 0.98;
+    });
+  });
+}
+
+// ---------- core (shield emblem) ----------
+const core = new THREE.Group();
+{
+  const sphere = shadowy(new THREE.Mesh(new THREE.SphereGeometry(0.85, 96, 96), phys(C.ivory)));
+  core.add(sphere);
+  const rings = [], dots = [];
+  [[1.35, 0.06, C.clay], [1.85, 0.035, C.ink], [2.35, 0.025, C.gray]].forEach(([r, tube, c]) => {
+    const ring = shadowy(new THREE.Mesh(new THREE.TorusGeometry(r, tube, 24, 220), std(c)));
+    const dot = shadowy(new THREE.Mesh(new THREE.SphereGeometry(tube * 2.4 + 0.04, 32, 32), std(c === C.gray ? C.clay : c)));
+    ring.add(dot); core.add(ring); rings.push(ring); dots.push(dot);
+  });
+  core.userData = { rings, dots, sphere };
+}
+scene.add(core);
+function animateCore(t) {
+  const { rings, dots } = core.userData;
+  rings[0].rotation.set(1.25 + 0.15 * Math.sin(t * 0.5), t * 0.35, 0);
+  rings[1].rotation.set(0.5, -t * 0.28, 0.6 + t * 0.12);
+  rings[2].rotation.set(-0.9 + t * 0.1, 0.35, t * 0.08);
+  dots.forEach((d, i) => { const r = [1.35, 1.85, 2.35][i], a = t * (0.9 - i * 0.2) + i * 2.1; d.position.set(r * Math.cos(a), r * Math.sin(a), 0); });
+}
+
+// ---------- S2 feed ----------
+const feed = new THREE.Group();
+feed.position.set(-4.1, 0, 0); feed.rotation.set(-0.08, 0.42, 0.02);
+const cards = [];
+for (let i = 0; i < 6; i++) {
+  const g = new THREE.Group();
+  const body = shadowy(new THREE.Mesh(new RoundedBoxGeometry(3.6, 0.95, 0.16, 4, 0.08), phys(C.ivory)));
+  g.add(body);
+  const av = new THREE.Mesh(new THREE.CircleGeometry(0.22, 40), std(C.cloud)); av.position.set(1.4, 0.05, 0.085); g.add(av);
+  [[2.2, 0.18], [1.5, -0.12]].forEach(([w, y], k) => {
+    const l = new THREE.Mesh(new RoundedBoxGeometry(w, 0.1, 0.01, 2, 0.04), std(k ? C.cloud : C.gray));
+    l.position.set(1.0 - w / 2 - 0.1, y, 0.085); g.add(l);
+  });
+  g.userData = { body };
+  feed.add(g); cards.push(g);
+}
+scene.add(feed);
+
+// ---------- S3 pipeline ----------
+const pipe = new THREE.Group();
+pipe.position.set(-4.0, -0.15, 0); pipe.rotation.set(0.42, -0.62, 0);
+const plates = [], plateY = i => 2.8 - i * 0.8;
+for (let i = 0; i < 8; i++) {
+  const g = new THREE.Group();
+  const geo = new RoundedBoxGeometry(3.4, 0.1, 2.3, 3, 0.05);
+  const m = shadowy(new THREE.Mesh(geo, phys(C.ivory, { opacity: 0.82, emissive: C.clay, emissiveIntensity: 0 })));
+  const edges = new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(3.4, 0.1, 2.3)), lineMat(C.ink, 0.18));
+  const pulse = new THREE.Mesh(new THREE.TorusGeometry(0.6, 0.018, 12, 120), std(C.clay, { opacity: 0 }));
+  pulse.rotation.x = Math.PI / 2; pulse.position.y = 0.07;
+  g.add(m, edges, pulse); g.position.y = plateY(i);
+  g.userData = { m, pulse };
+  pipe.add(g); plates.push(g);
+}
+const tokGeo = new RoundedBoxGeometry(0.55, 0.55, 0.55, 4, 0.12);
+const tok1 = shadowy(new THREE.Mesh(tokGeo, phys(C.ink)));
+const tok2 = shadowy(new THREE.Mesh(tokGeo, phys(C.ink)));
+pipe.add(tok1, tok2);
+scene.add(pipe);
+
+// ---------- S4 admin ----------
+const adminG = new THREE.Group();
+adminG.position.set(-4.6, -0.6, 0);
+const pedestal = shadowy(new THREE.Mesh(new THREE.CylinderGeometry(1.4, 1.5, 0.22, 96), phys(C.cloud)));
+pedestal.position.y = -1.7;
+const bodyM = shadowy(new THREE.Mesh(new THREE.CapsuleGeometry(0.55, 1.0, 12, 48), phys(C.ivory)));
+bodyM.position.y = -0.55;
+const head = shadowy(new THREE.Mesh(new THREE.SphereGeometry(0.42, 64, 64), phys(C.ivory)));
+head.position.y = 0.75;
+const badge = shadowy(new THREE.Mesh(new THREE.TorusGeometry(0.42, 0.075, 24, 120), std(C.clay)));
+const postCard = shadowy(new THREE.Mesh(new RoundedBoxGeometry(1.3, 0.85, 0.08, 3, 0.05), phys(C.clay)));
+postCard.position.set(-2.1, 0.4, 0.3);
+const snap = new THREE.Group();
+snap.add(new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(1.2, 1.2, 1.2)), lineMat(C.ink, 0.6)));
+snap.add(new THREE.Mesh(new THREE.BoxGeometry(1.2, 1.2, 1.2), std(C.clay, { opacity: 0.08 })));
+snap.position.set(2.3, 0.5, 0.2);
+adminG.add(pedestal, bodyM, head, badge, postCard, snap);
+scene.add(adminG);
+
+// ---------- S5 shield ----------
+const shieldG = new THREE.Group();
+shieldG.position.set(-4.0, 0, 0);
+const dome = new THREE.Mesh(new THREE.SphereGeometry(2.25, 96, 64), phys(C.clay, { opacity: 0.16, roughness: 0.2, side: THREE.DoubleSide }));
+const domeWire = new THREE.Mesh(new THREE.IcosahedronGeometry(2.27, 3), new THREE.MeshBasicMaterial({ color: C.clayD, wireframe: true, transparent: true, opacity: 0.28 }));
+const orbitPlane = new THREE.Group(); orbitPlane.rotation.set(0.38, 0, 0.1);
+const admins = [];
+for (let i = 0; i < 6; i++) {
+  const a = shadowy(new THREE.Mesh(new THREE.CapsuleGeometry(0.16, 0.28, 8, 24), phys(C.ink)));
+  orbitPlane.add(a); admins.push(a);
+}
+shieldG.add(dome, domeWire, orbitPlane);
+scene.add(shieldG);
+
+// ---------- S6 bars ----------
+const barsG = new THREE.Group();
+barsG.position.set(-4.1, -2.05, 0); barsG.rotation.set(0.12, -0.42, 0);
+const slab = shadowy(new THREE.Mesh(new RoundedBoxGeometry(4.6, 0.14, 1.9, 3, 0.06), phys(C.cloud)));
+const barA = shadowy(new THREE.Mesh(new THREE.BoxGeometry(1.3, 1, 1.0), std(C.gray, { roughness: 0.6 })));
+const barB = shadowy(new THREE.Mesh(new THREE.BoxGeometry(1.3, 1, 1.0), std(C.clay, { roughness: 0.5 })));
+barA.position.x = -1.15; barB.position.x = 1.15;
+barsG.add(slab, barA, barB);
+scene.add(barsG);
+const BAR_MAX = 3.7;
+
+// ---------- S7 privacy ----------
+const privG = new THREE.Group();
+privG.position.set(-4.0, 0, 0); privG.rotation.set(0.25, -0.5, 0);
+const boxS = 3.4;
+privG.add(new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(boxS, boxS, boxS)), lineMat(C.ink, 0.45)));
+privG.add(new THREE.Mesh(new THREE.BoxGeometry(boxS, boxS, boxS), std(C.cloud, { opacity: 0.18, side: THREE.BackSide })));
+const arTok = [0, 1, 2].map(() => { const m = shadowy(new THREE.Mesh(new RoundedBoxGeometry(0.5, 0.5, 0.5, 4, 0.12), phys(C.clay))); privG.add(m); return m; });
+const enTok = shadowy(new THREE.Mesh(new RoundedBoxGeometry(0.5, 0.5, 0.5, 4, 0.12), phys(C.sky)));
+privG.add(enTok);
+scene.add(privG);
+
+// ---------- UI helpers ----------
+const $ = id => document.getElementById(id);
+const scenesEl = Object.fromEntries(Object.keys(SC).map(k => [k, $(k)]));
+const rows = [...document.querySelectorAll("#s3 .row")];
+const steps = [...document.querySelectorAll("#s4 .step")];
+const v3 = new THREE.Vector3();
+function place(el, obj, local, opacity, dy = 0) {
+  obj.updateMatrixWorld(true);
+  v3.copy(local); obj.localToWorld(v3); v3.project(camera);
+  el.style.left = ((v3.x + 1) / 2 * W) + "px";
+  el.style.top = ((1 - v3.y) / 2 * H + dy) + "px";
+  el.style.opacity = opacity;
+}
+function stagger(sceneId, t) {
+  const [a, b] = SC[sceneId];
+  const root = scenesEl[sceneId];
+  const on = t >= a - 0.01 && t <= b + 0.01;
+  root.style.opacity = on ? 1 : 0;
+  if (!on) return;
+  root.querySelectorAll("[data-in]").forEach(el => {
+    const tin = a + parseFloat(el.dataset.in);
+    const k = eout(prog(t, tin, tin + 0.9));
+    const o = Math.min(k, 1 - eio(prog(t, b - 0.55, b)));
+    el.style.opacity = o;
+    el.style.transform = `translateY(${(1 - k) * 26}px)`;
+    el.style.filter = k < 1 ? `blur(${(1 - k) * 8}px)` : "none";
+  });
+}
+const fmt = (x, d) => x.toFixed(d);
+
+// ---------- frame ----------
+function seek(t) {
+  // camera drift
+  camera.position.set(Math.sin(t * 0.13) * 0.45, 0.35 + Math.cos(t * 0.11) * 0.25, 14.5);
+  camera.lookAt(0, 0, 0);
+  camera.updateMatrixWorld();
+
+  Object.keys(SC).forEach(k => stagger(k, t));
+  const chrome = Math.min(vis(t, 6.2, 57.5, 0.8, 0.5), 1);
+  $("mark").style.opacity = chrome;
+  $("prog").style.opacity = chrome * (1 - vis(t, 43, 53, 0.4, 0.4));
+  ground.material.opacity = 0.09 * vis(t, 6.0, 57.6, 0.6, 0.4);
+  $("prog").firstElementChild.style.width = (prog(t, 6, 57.5) * 100) + "%";
+
+  // ---- core placement per scene ----
+  animateCore(t);
+  let cOp = 0, cPos = [0, 0.95, 0], cScale = 1;
+  if (t < 6.4) {
+    cOp = vis(t, 0.2, 6.4, 1.2, 0.8);
+    cScale = 0.82 * lerp(0.55, 1, eout(prog(t, 0.2, 2.2)));
+    cPos = [0, lerp(0.55, 1.15, eout(prog(t, 0.2, 2.6))), 0];
+  } else if (t >= 36 && t < 43) {
+    cOp = vis(t, 36.1, 43, 0.7, 0.6); cScale = 0.62; cPos = [-4.0, 0, 0];
+  } else if (t >= 53 && t < 57.5) {
+    cOp = vis(t, 53.1, 57.5, 0.7, 0.5); cScale = 0.34; cPos = [-4.0, 0, 0];
+  } else if (t >= 57.5) {
+    cOp = vis(t, 57.6, 64.5, 1.0, 0.8); cScale = 0.82 * lerp(0.7, 1, eout(prog(t, 57.6, 59.4))); cPos = [0, 1.15, 0];
+  }
+  core.position.set(...cPos);
+  core.scale.setScalar(cScale);
+  core.rotation.y = Math.sin(t * 0.2) * 0.25;
+  setOpacity(core, cOp);
+  if (t >= 53 && t < 57.5) core.rotation.set(0.25, -0.5, 0);
+
+  // ---- S2 feed ----
+  {
+    const [a, b] = SC.s2;
+    const op = vis(t, a + 0.1, b, 0.8, 0.6);
+    setOpacity(feed, op);
+    const scroll = (t - a) * 0.22;
+    cards.forEach((g, i) => {
+      g.position.set(0, 2.6 - i * 1.18 + scroll - 0.4, 0);
+      const appear = eout(prog(t, a + 0.1 + i * 0.12, a + 0.9 + i * 0.12));
+      g.position.x = (1 - appear) * 1.2;
+      const isBad = i === 3;
+      if (isBad) {
+        const k = eout(prog(t, a + 2.3, a + 2.9));
+        g.userData.body.material.color = mixCol(C.ivory, C.clay, k);
+        const shake = prog(t, a + 2.3, a + 3.6) > 0 && prog(t, a + 2.3, a + 3.6) < 1 ? Math.sin(t * 70) * 0.05 : 0;
+        g.position.x += shake;
+        g.position.z = k * 0.6;
+        const gone = eio(prog(t, a + 4.4, a + 5.0));
+        g.scale.setScalar(1 - gone * 0.999);
+      } else {
+        g.userData.body.material.color = col(C.ivory);
+        g.scale.setScalar(1);
+      }
+    });
+  }
+
+  // ---- S3 pipeline ----
+  {
+    const [a, b] = SC.s3;
+    const op = vis(t, a + 0.05, b, 0.6, 0.6);
+    pipe.visible = op > 0.002;
+    pipe.rotation.y = -0.62 + Math.sin(t * 0.25) * 0.06;
+    // token paths
+    const y1 = lerp(3.8, -3.8, prog(t, a + 1.5, a + 8.5));
+    const t1op = Math.min(vis(t, a + 1.3, a + 9.6, 0.4, 0.5), op);
+    const p2 = eout(prog(t, a + 9.6, a + 11.0));
+    const y2 = lerp(3.8, plateY(3) + 0.38, p2);
+    const kill = eio(prog(t, a + 12.0, a + 12.8));
+    const t2op = Math.min(vis(t, a + 9.4, b, 0.4, 0.6), op);
+    tok1.position.set(0, y1, 0); tok1.rotation.y = t * 1.2;
+    const shake2 = (t > a + 11.0 && t < a + 11.9) ? Math.sin(t * 80) * 0.06 : 0;
+    tok2.position.set(shake2, y2, 0); tok2.rotation.y = t * 1.2;
+    tok2.material.color = mixCol(C.ink, C.clayD, prog(t, a + 11.0, a + 11.3));
+    tok2.scale.setScalar(Math.max(0.001, 1 - kill));
+    setOpacity(tok1, t1op); setOpacity(tok2, t2op * (1 - kill * 0.9));
+
+    const phase2 = t >= a + 9.4;
+    plates.forEach((g, i) => {
+      const appear = eout(prog(t, a + 0.1 + i * 0.07, a + 0.8 + i * 0.07));
+      g.position.y = plateY(i) + (1 - appear) * 1.5;
+      setOpacity(g, Math.min(op, appear));
+      const y = phase2 ? y2 : y1;
+      const near = (phase2 ? t2op : t1op) > 0.05 ? Math.exp(-Math.pow((y - plateY(i)) / 0.32, 2)) : 0;
+      const block = phase2 && i === 3 ? vis(t, a + 11.0, b, 0.25, 0.8) : 0;
+      const glow = Math.max(near, block);
+      g.userData.m.material.color = mixCol(C.ivory, block > 0.01 ? C.clayD : C.clay, glow * 0.85);
+      g.userData.m.material.emissiveIntensity = glow * 0.25;
+      // pulse ring: expands as token crosses
+      const below = y < plateY(i) ? (plateY(i) - y) : -1;
+      const pr = phase2 && i === 3 ? prog(t, a + 11.0, a + 12.0) : (below >= 0 && below < 0.9 ? below / 0.9 : 0);
+      g.userData.pulse.scale.setScalar(0.4 + pr * 2.2);
+      g.userData.pulse.material.opacity = pr > 0 && pr < 1 ? (1 - pr) * 0.9 * op : 0;
+      // list rows
+      const r = rows[i];
+      r.className = "row";
+      if (!phase2) {
+        if (t1op > 0.05 && Math.abs(y1 - plateY(i)) < 0.4) r.classList.add("active");
+        if (y1 < plateY(i) - 0.15) r.classList.add("pass");
+      } else {
+        if (i < 3 && y2 < plateY(i) - 0.15) r.classList.add("pass");
+        else if (i === 3 && t >= a + 11.0) r.classList.add("block");
+        else if (i === 3 && Math.abs(y2 - plateY(i)) < 0.6) r.classList.add("active");
+        else if (i > 3 && t >= a + 11.0) r.classList.add("dim");
+      }
+    });
+    // labels
+    const l1 = $("tok1"), l2 = $("tok2");
+    const done1 = t > a + 8.3;
+    l1.textContent = done1 ? "✓ نُشر بأمان" : "منشور";
+    l1.style.color = done1 ? "#788C5D" : "#141413";
+    place(l1, pipe, new THREE.Vector3(-1.9, Math.max(y1, -3.0), 0), t1op * vis(t, a + 1.6, a + 9.6, 0.5, 0.5));
+    const blocked = t > a + 11.0;
+    l2.textContent = blocked ? "✕ رابط خارجي، حُذف" : "منشور فيه رابط";
+    l2.style.color = blocked ? "#C96442" : "#141413";
+    place(l2, pipe, new THREE.Vector3(-1.9, y2, 0), Math.min(vis(t, a + 9.7, b, 0.5, 0.6), op));
+  }
+
+  // ---- S4 enforcement ----
+  {
+    const [a, b] = SC.s4;
+    const op = vis(t, a + 0.1, b, 0.7, 0.6);
+    setOpacity(adminG, op);
+    adminG.rotation.y = -0.35 + Math.sin(t * 0.3) * 0.08;
+    const tDel = a + 1.5, tSnap = a + 2.5, tDem = a + 3.3, tNote = a + 4.5, tPress = a + 6.0, tBack = a + 6.3;
+    // post dissolves
+    const del = eio(prog(t, tDel, tDel + 0.7));
+    postCard.scale.setScalar(Math.max(0.001, 1 - del));
+    postCard.rotation.set(0.1, 0.4 + del * 2, del);
+    setOpacity(postCard, op * (1 - del));
+    // snapshot box
+    const sp = prog(t, tSnap, tSnap + 0.6);
+    snap.scale.setScalar(Math.max(0.001, eback(sp)));
+    snap.rotation.set(t * 0.4, t * 0.6, 0);
+    setOpacity(snap, op * (sp > 0 ? 1 : 0));
+    // badge path: head → box → head
+    const headPos = new THREE.Vector3(0, 1.65, 0), boxPos = snap.position.clone();
+    const go = eio(prog(t, tDem, tDem + 1.0)), back = eio(prog(t, tBack, tBack + 1.0));
+    const k = go * (1 - back);
+    const pos = headPos.clone().lerp(boxPos, k); pos.y += Math.sin(k * Math.PI) * 0.9 * (back > 0 ? 1 : 1);
+    badge.position.copy(pos);
+    badge.rotation.set(Math.PI / 2 - 0.85 + Math.sin(t * 1.5) * 0.12, t * 1.2, 0);
+    badge.scale.setScalar(lerp(1, 0.75, k));
+    const demoted = clamp(go) * (1 - clamp(back));
+    bodyM.material.color = mixCol(C.ivory, C.gray, demoted * 0.8);
+    head.material.color = mixCol(C.ivory, C.gray, demoted * 0.8);
+    // steps
+    [tDel, tSnap, tDem, tNote].forEach((ts, i) => {
+      steps[i].className = "step" + (t >= ts ? " on" : "") + (t >= ts && t < ([tSnap, tDem, tNote, tPress][i]) ? " now" : "");
+    });
+    // card
+    const card = $("card"), cin = eout(prog(t, tNote, tNote + 0.8));
+    card.style.opacity = Math.min(cin, 1 - eio(prog(t, b - 0.55, b)));
+    card.style.transform = `perspective(1400px) translateY(${(1 - cin) * 40}px) rotateX(${(1 - cin) * 12}deg)`;
+    const btn = $("btn"), ok = $("ok"), cur = $("cursor");
+    const br = btn.getBoundingClientRect();
+    const tx = br.left + br.width * 0.4, ty = br.top + br.height * 0.55;
+    const cm = eio(prog(t, tPress - 0.9, tPress - 0.1));
+    cur.style.left = lerp(tx - 160, tx, cm) + "px"; cur.style.top = lerp(ty + 120, ty, cm) + "px";
+    cur.style.opacity = Math.min(vis(t, tPress - 1.0, tPress + 0.9, 0.3, 0.4), card.style.opacity);
+    const press = t >= tPress && t < tPress + 0.18;
+    cur.style.transform = `translate(-50%,-50%) scale(${press ? 0.8 : 1})`;
+    btn.style.transform = press ? "scale(.96)" : "scale(1)";
+    btn.style.background = t >= tPress ? "#3D3D3A" : "#141413";
+    ok.style.opacity = eout(prog(t, tBack + 0.4, tBack + 0.9));
+  }
+
+  // ---- S5 shield ----
+  {
+    const [a, b] = SC.s5;
+    const op = vis(t, a + 0.1, b, 0.7, 0.6);
+    shieldG.visible = op > 0.002;
+    const on = eout(prog(t, a + 1.3, a + 2.3)), off = eio(prog(t, a + 4.4, a + 5.2));
+    const d = on * (1 - off);
+    dome.scale.setScalar(Math.max(0.001, lerp(0.6, 1, d))); domeWire.scale.copy(dome.scale);
+    setOpacity(dome, op * d); setOpacity(domeWire, op * d);
+    domeWire.rotation.y = t * 0.15;
+    const out = eio(prog(t, a + 1.8, a + 2.8)) * (1 - eio(prog(t, a + 4.6, a + 5.6)));
+    admins.forEach((m, i) => {
+      const ang = t * 0.35 + i * Math.PI / 3, R = lerp(2.6, 3.5, out);
+      m.position.set(R * Math.cos(ang), 0, R * Math.sin(ang));
+      m.material.color = mixCol(C.ink, C.gray, out);
+      m.scale.setScalar(lerp(1, 0.8, out));
+    });
+    setOpacity(orbitPlane, op);
+    const st = $("clkst"), bar = $("clkbar");
+    const run = prog(t, a + 2.4, a + 4.4);
+    bar.style.width = (run * 100) + "%";
+    if (t < a + 1.6) { st.textContent = "جاهز · ٦ مشرفين"; st.style.color = "#3D3D3A"; }
+    else if (t < a + 4.8) { st.textContent = "● الاحتماء مفعّل · المشرفون منزّلون مؤقتًا"; st.style.color = "#C96442"; }
+    else { st.textContent = "↻ أُعيد المشرفون تلقائيًا"; st.style.color = "#788C5D"; }
+    const hh = Math.floor(run * 6), mm = Math.floor((run * 6 - hh) * 60);
+    $("clktm").textContent = `${String(hh).padStart(2, "0")}:${String(mm).padStart(2, "0")} → 06:00`;
+  }
+
+  // ---- S6 benchmark ----
+  {
+    const [a, b] = SC.s6;
+    const op = vis(t, a + 0.1, b, 0.7, 0.6);
+    setOpacity(barsG, op);
+    barsG.rotation.y = -0.42 + Math.sin(t * 0.25) * 0.05;
+    const gA = eout(prog(t, a + 1.0, a + 2.6)), gB = eout(prog(t, a + 1.3, a + 2.9));
+    const hA = Math.max(0.001, BAR_MAX * gA), hB = Math.max(0.001, BAR_MAX * 0.2 * gB);
+    barA.scale.y = hA; barA.position.y = 0.07 + hA / 2;
+    barB.scale.y = hB; barB.position.y = 0.07 + hB / 2;
+    const lab = Math.min(op, eout(prog(t, a + 2.0, a + 2.8)));
+    place($("bcap"), barsG, new THREE.Vector3(0, BAR_MAX + 1.35, 0), Math.min(op, eout(prog(t, a + 0.8, a + 1.6))));
+    place($("bvA"), barsG, new THREE.Vector3(-1.15, hA + 0.55, 0.5), lab);
+    place($("bvB"), barsG, new THREE.Vector3(1.15, hB + 0.55, 0.5), lab);
+    $("bvA").textContent = Math.round(1000 * gA).toLocaleString("en-US");
+    $("bvB").textContent = Math.round(200 * gB).toLocaleString("en-US");
+    place($("blA"), barsG, new THREE.Vector3(-1.15, -0.1, 1.0), lab, 34);
+    place($("blB"), barsG, new THREE.Vector3(1.15, -0.1, 1.0), lab, 34);
+    const dr = eback(prog(t, a + 3.3, a + 3.9));
+    place($("bdrop"), barsG, new THREE.Vector3(2.0, hB + 1.5, 0.5), Math.min(op, prog(t, a + 3.3, a + 3.6)));
+    $("bdrop").style.transform = `translate(-50%,-50%) scale(${Math.max(0, dr)})`;
+    const c = eout(prog(t, a + 1.6, a + 3.6));
+    $("st1").textContent = Math.round(80 * c) + "%";
+    $("st2").textContent = fmt(0.71 * c, 2);
+    $("st3").textContent = fmt(1.9 * c, 1);
+    $("st4").textContent = Math.round(28 * c) + "/28";
+  }
+
+  // ---- S7 privacy ----
+  {
+    const [a, b] = SC.s7;
+    const op = vis(t, a + 0.1, b, 0.7, 0.5);
+    setOpacity(privG, op);
+    privG.rotation.y = -0.5 + Math.sin(t * 0.3) * 0.08;
+    const lim = boxS / 2 - 0.45;
+    arTok.forEach((m, i) => {
+      const s = t * (0.8 + i * 0.17) + i * 2.3;
+      m.position.set(Math.sin(s * 1.1) * lim, Math.cos(s * 0.9 + i) * lim * 0.85, Math.sin(s * 0.7 + i * 1.7) * lim * 0.8);
+      m.rotation.set(s, s * 0.7, 0);
+      place($("g" + i), privG, m.position, op);
+    });
+    const ex = eio(prog(t, a + 1.4, a + 3.4));
+    enTok.position.set(lerp(0.3, 5.2, ex), lerp(-0.6, 0.4, ex), lerp(0.3, 1.0, ex));
+    enTok.rotation.set(t, t * 0.8, 0);
+    place($("g3"), privG, enTok.position, op);
+    place($("gout"), privG, enTok.position.clone().add(new THREE.Vector3(0, 0.75, 0)), Math.min(op, prog(t, a + 2.3, a + 2.8)));
+  }
+
+  renderer.render(scene, camera);
+}
+
+window.seek = seek;
+window.DURATION = DURATION;
+await document.fonts.ready;
+for (const f of ["500 20px Naskh", "700 20px Naskh", "400 20px Plex", "500 20px Plex", "600 20px Plex", "400 20px Serif", "600 20px Serif", "400 20px Mono", "500 20px Mono"]) await document.fonts.load(f, "ابت abc");
+seek(0);
+window.READY = true;
+</script>
+</body>
+</html>
