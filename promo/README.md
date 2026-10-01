@@ -52,6 +52,23 @@ large-scale automation, internal/external systems) are not part of this cut.
 | 3:17 | Timeline recap 2022 → 2026 |
 | 3:30 | Everything converges into the BR logo, end card, fade, final impact |
 
+## Render on a PC with a graphics card
+
+On a machine with a GPU (e.g. RTX 4060) the whole film builds in roughly 10–25 minutes,
+instead of hours on a CPU-only server. On Windows:
+
+```powershell
+winget install OpenJS.NodeJS.LTS Python.Python.3.12 Gyan.FFmpeg Git.Git
+git clone -b claude/br-promotional-film-qfvb7p https://github.com/qna1087-coder/mybot-.git
+cd mybot-\promo
+npm install
+npx playwright install chromium
+pip install numpy scipy
+node make.mjs --gpu
+```
+
+The finished film lands in `release/BR_promo_1080p.mp4`.
+
 ## Rebuild
 
 ```bash
@@ -63,6 +80,7 @@ node render.mjs --cues out/cues.json          # timing for the soundtrack
 python3 tools/soundtrack.py out/cues.json out # voice processing, music, sfx, mixes, captions, cue sheet
 node render.mjs --from 0 --to 67 --out out/chunks/c0.mp4   # …render ranges in parallel (the software GPU uses one core each)
 tools/assemble.sh                             # join + mux → release/
+# or all of the above in one go: node make.mjs [--gpu] [--workers N]
 ```
 
 Look at single frames with `node render.mjs --stills 12,68,186`, or watch it live by

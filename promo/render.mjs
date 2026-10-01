@@ -3,6 +3,7 @@
 //   node render.mjs --stills 5,30,60         → out/stills/t005.00.png …
 //   node render.mjs --from 0 --to 30 --out out/chunk0.mp4
 //   node render.mjs --cues out/cues.json     → dump timing (captions, titles, sfx)
+//   add --gpu to any of these to render on the graphics card
 //
 // Each frame is a pure function of time, so ranges can be rendered in parallel.
 
@@ -43,9 +44,14 @@ const server = http.createServer((req, res) => {
 await new Promise((r) => server.listen(0, '127.0.0.1', r));
 const port = server.address().port;
 
+// --gpu renders on the machine's graphics card (much faster); the default is the
+// software rasterizer, which works anywhere, including servers without a GPU.
 const browser = await chromium.launch({
   executablePath: process.env.CHROMIUM || undefined,
-  args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist', '--disable-gpu-vsync'],
+  channel: args.gpu ? 'chromium' : undefined,
+  args: args.gpu
+    ? ['--ignore-gpu-blocklist', '--enable-gpu', '--disable-gpu-vsync']
+    : ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist', '--disable-gpu-vsync'],
 });
 const page = await browser.newPage({ viewport: { width: 1920, height: 1080 } });
 page.setDefaultTimeout(300000);
